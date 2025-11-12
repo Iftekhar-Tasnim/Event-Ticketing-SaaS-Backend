@@ -12,9 +12,16 @@ import {
   Max,
   Matches,
   MinLength,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export enum Gender {
+  MALE = 'male',
+  FEMALE = 'female',
+}
+
+//create admin dto
 export class CreateAdminDto {
   @IsString()
   @IsNotEmpty()
@@ -23,10 +30,9 @@ export class CreateAdminDto {
   })
   name: string;
 
+  @IsNotEmpty()
   @IsEmail()
-  @Matches(/@.+\.xyz$/i, {
-    message: 'email must be in the .xyz domain',
-  })
+  @Matches(/.*@aiub\.edu$/)
   email: string;
 
   @IsString()
@@ -44,6 +50,10 @@ export class CreateAdminDto {
 
   @IsIn(['owner', 'admin', 'staff', 'superadmin'])
   role: string;
+
+  @IsNotEmpty()
+  @IsEnum(Gender)
+  gender: string;
 
   @Matches(/^\d{10,17}$/, {
     message: 'nidNumber must be 10 to 17 digits',
@@ -80,6 +90,7 @@ export class CreateAdminDto {
   country?: string;
 }
 
+//update admin dto
 export class UpdateAdminDto {
   @IsOptional()
   @IsString()
@@ -88,16 +99,15 @@ export class UpdateAdminDto {
   })
   name?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsEmail()
-  @Matches(/@.+\.xyz$/i, {
-    message: 'email must be in the .xyz domain',
-  })
-  email?: string;
+  @Matches(/.*@aiub\.edu$/)
+  email: string;
 
-  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
   @MinLength(8)
-  password?: string;
+  password: string;
 
   @IsOptional()
   @IsUUID()
@@ -113,6 +123,10 @@ export class UpdateAdminDto {
   @IsOptional()
   @IsIn(['owner', 'admin', 'staff', 'superadmin'])
   role?: string;
+
+  @IsOptional()
+  @IsEnum(Gender)
+  gender?: string;
 
   @IsOptional()
   @Matches(/^\d{10,17}$/, {
@@ -150,6 +164,7 @@ export class UpdateAdminDto {
   country?: string;
 }
 
+//update admin status dto
 export class UpdateAdminStatusDto {
   @IsIn(['active', 'inactive', 'suspended'], {
     message: 'status must be one of: active, inactive, suspended',
@@ -162,10 +177,9 @@ export class CreateUserDto {
   @IsNotEmpty()
   name: string;
 
+  @IsNotEmpty()
   @IsEmail()
-  @Matches(/@.+\.xyz$/i, {
-    message: 'email must be in the .xyz domain',
-  })
+  @Matches(/.*@aiub\.edu$/)
   email: string;
 
   @MinLength(8)
