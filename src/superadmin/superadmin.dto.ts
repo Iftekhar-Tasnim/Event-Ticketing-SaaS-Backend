@@ -5,201 +5,294 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  IsUrl,
-  IsArray,
   IsInt,
   Min,
   Max,
   Matches,
   MinLength,
   MaxLength,
-  IsEnum,
+  IsObject,
+  IsBoolean,
+  IsNumber,
+  IsDateString,
+  Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export enum Gender {
-  MALE = 'male',
-  FEMALE = 'female',
-}
-
-//create admin dto
-export class CreateAdminDto {
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^[A-Za-z\s]+$/i, {
-    message: 'name must contain only alphabets and spaces',
-  })
-  name: string;
-
-  @IsNotEmpty()
+// User DTOs (Platform Users)
+export class CreateUserDto {
   @IsEmail()
-  @Matches(/.*@aiub\.edu$/)
+  @IsNotEmpty()
   email: string;
 
   @IsString()
-  @MinLength(8)
-  password: string;
-
-  @IsUUID()
-  tenantId: string;
-
-  @Matches(/^(?:\+?88)?01[3-9]\d{8}$/, {
-    message:
-      'phone must be a valid Bangladesh number (e.g. +8801XXXXXXXXX or 01XXXXXXXXX)',
-  })
-  phone: string;
-
-  @IsIn(['owner', 'admin', 'staff', 'superadmin'])
-  role: string;
-
   @IsNotEmpty()
-  @IsEnum(Gender)
-  gender: string;
+  @MinLength(8)
+  passwordHash: string;
 
-  @Matches(/^\d{10,17}$/, {
-    message: 'nidNumber must be 10 to 17 digits',
-  })
-  nidNumber: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  fullName: string;
 
   @IsOptional()
-  @IsUrl()
-  nidImageUrl?: string;
+  @IsBoolean()
+  isPlatformSuperadmin?: boolean;
+}
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  passwordHash?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  fullName?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPlatformSuperadmin?: boolean;
+}
+
+// Tenant DTOs
+export class CreateTenantDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'slug must contain only lowercase letters, numbers, and hyphens',
+  })
+  slug: string;
+
+  @IsOptional()
+  @IsObject()
+  brandingSettings?: Record<string, any>;
+
+  @IsOptional()
+  @IsIn(['active', 'suspended', 'pending'])
+  status?: string;
+}
+
+export class UpdateTenantDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'slug must contain only lowercase letters, numbers, and hyphens',
+  })
+  slug?: string;
+
+  @IsOptional()
+  @IsObject()
+  brandingSettings?: Record<string, any>;
+
+  @IsOptional()
+  @IsIn(['active', 'suspended', 'pending'])
+  status?: string;
+}
+
+export class UpdateTenantStatusDto {
+  @IsIn(['active', 'suspended', 'pending'], {
+    message: 'status must be one of: active, suspended, pending',
+  })
+  status: string;
+}
+
+// Tenant User DTOs
+export class CreateTenantUserDto {
+  @IsUUID()
+  @IsNotEmpty()
+  tenantId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsIn(['admin', 'staff'], {
+    message: 'role must be either admin or staff',
+  })
+  role: string;
 
   @IsOptional()
   @IsIn(['active', 'inactive', 'suspended'])
   status?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  permissions?: string[];
-
-  @IsOptional()
-  @IsString()
-  addressLine1?: string;
-
-  @IsOptional()
-  @IsString()
-  addressLine2?: string;
-
-  @IsOptional()
-  @IsString()
-  city?: string;
-
-  @IsOptional()
-  @IsString()
-  country?: string;
 }
 
-//update admin dto
-export class UpdateAdminDto {
+export class UpdateTenantUserDto {
   @IsOptional()
-  @IsString()
-  @Matches(/^[A-Za-z\s]+$/i, {
-    message: 'name must contain only alphabets and spaces',
-  })
-  name?: string;
-
-  @IsNotEmpty()
-  @IsEmail()
-  @Matches(/.*@aiub\.edu$/)
-  email: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(8)
-  password: string;
-
-  @IsOptional()
-  @IsUUID()
-  tenantId?: string;
-
-  @IsOptional()
-  @Matches(/^(?:\+?88)?01[3-9]\d{8}$/, {
-    message:
-      'phone must be a valid Bangladesh number (e.g. +8801XXXXXXXXX or 01XXXXXXXXX)',
-  })
-  phone?: string;
-
-  @IsOptional()
-  @IsIn(['owner', 'admin', 'staff', 'superadmin'])
+  @IsIn(['admin', 'staff'])
   role?: string;
 
   @IsOptional()
-  @IsEnum(Gender)
-  gender?: string;
-
-  @IsOptional()
-  @Matches(/^\d{10,17}$/, {
-    message: 'nidNumber must be 10 to 17 digits',
-  })
-  nidNumber?: string;
-
-  @IsOptional()
-  @IsUrl()
-  nidImageUrl?: string;
-
-  @IsOptional()
   @IsIn(['active', 'inactive', 'suspended'])
   status?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  permissions?: string[];
-
-  @IsOptional()
-  @IsString()
-  addressLine1?: string;
-
-  @IsOptional()
-  @IsString()
-  addressLine2?: string;
-
-  @IsOptional()
-  @IsString()
-  city?: string;
-
-  @IsOptional()
-  @IsString()
-  country?: string;
 }
 
-//update admin status dto
-export class UpdateAdminStatusDto {
+export class UpdateTenantUserStatusDto {
   @IsIn(['active', 'inactive', 'suspended'], {
     message: 'status must be one of: active, inactive, suspended',
   })
   status: string;
 }
 
-export class CreateUserDto {
+// Webhook Event DTOs
+export class CreateWebhookEventDto {
+  @IsIn(['stripe', 'mailer', 'other'], {
+    message: 'provider must be one of: stripe, mailer, other',
+  })
+  provider: string;
+
   @IsString()
   @IsNotEmpty()
-  name: string;
+  eventType: string;
 
+  @IsObject()
   @IsNotEmpty()
-  @IsEmail()
-  @Matches(/.*@aiub\.edu$/)
-  email: string;
+  payload: Record<string, any>;
 
-  @MinLength(8)
-  password: string;
-
-  @IsUUID()
-  tenantId: string;
-
-  @Matches(/^(?:\+?88)?01[3-9]\d{8}$/, {
-    message:
-      'phone must be a valid Bangladesh number (e.g. +8801XXXXXXXXX or 01XXXXXXXXX)',
-  })
-  phone: string;
-
-  @IsIn(['owner', 'admin', 'staff'])
-  role: string;
+  @IsDateString()
+  @IsNotEmpty()
+  receivedAt: string;
 }
 
-export class AdminQueryDto {
+export class UpdateWebhookEventDto {
+  @IsOptional()
+  @IsDateString()
+  processedAt?: string;
+
+  @IsOptional()
+  @IsIn(['pending', 'processed', 'failed'])
+  status?: string;
+
+  @IsOptional()
+  @IsString()
+  errorMessage?: string;
+}
+
+export class UpdateWebhookEventStatusDto {
+  @IsIn(['pending', 'processed', 'failed'], {
+    message: 'status must be one of: pending, processed, failed',
+  })
+  status: string;
+
+  @IsOptional()
+  @IsString()
+  errorMessage?: string;
+}
+
+// Payment DTOs
+export class CreatePaymentDto {
+  @IsUUID()
+  @IsNotEmpty()
+  orderId: string;
+
+  @IsIn(['stripe', 'paypal', 'other'], {
+    message: 'provider must be one of: stripe, paypal, other',
+  })
+  provider: string;
+
+  @IsString()
+  @IsNotEmpty()
+  providerReference: string;
+
+  @IsOptional()
+  @IsIn(['pending', 'completed', 'failed', 'refunded'])
+  status?: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(0)
+  amountCents: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @Length(3, 3)
+  currency: string;
+
+  @IsOptional()
+  @IsDateString()
+  processedAt?: string;
+
+  @IsOptional()
+  @IsObject()
+  payload?: Record<string, any>;
+}
+
+export class UpdatePaymentDto {
+  @IsOptional()
+  @IsIn(['pending', 'completed', 'failed', 'refunded'])
+  status?: string;
+
+  @IsOptional()
+  @IsDateString()
+  processedAt?: string;
+
+  @IsOptional()
+  @IsObject()
+  payload?: Record<string, any>;
+}
+
+export class UpdatePaymentStatusDto {
+  @IsIn(['pending', 'completed', 'failed', 'refunded'], {
+    message: 'status must be one of: pending, completed, failed, refunded',
+  })
+  status: string;
+}
+
+// Activity Log DTOs
+export class CreateActivityLogDto {
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  actorId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  action: string;
+
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, any>;
+}
+
+// Query DTOs
+export class UserQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+
+export class TenantQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -218,34 +311,118 @@ export class AdminQueryDto {
   search?: string;
 
   @IsOptional()
-  @IsIn(['active', 'inactive', 'suspended'])
+  @IsIn(['active', 'suspended', 'pending'])
   status?: string;
+}
+
+export class TenantUserQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
 
   @IsOptional()
-  @IsIn(['owner', 'admin', 'staff', 'superadmin'])
-  role?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
 
   @IsOptional()
   @IsUUID()
   tenantId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @IsOptional()
+  @IsIn(['admin', 'staff'])
+  role?: string;
+
+  @IsOptional()
+  @IsIn(['active', 'inactive', 'suspended'])
+  status?: string;
 }
 
-// Task3 DTOs for User operations
-export class CreateTask3UserDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  fullName: string;
-
+export class WebhookEventQueryDto {
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(0)
-  age: number;
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @IsOptional()
+  @IsIn(['stripe', 'mailer', 'other'])
+  provider?: string;
+
+  @IsOptional()
+  @IsString()
+  eventType?: string;
+
+  @IsOptional()
+  @IsIn(['pending', 'processed', 'failed'])
+  status?: string;
 }
 
-export class UpdateUserStatusDto {
-  @IsIn(['active', 'inactive'], {
-    message: 'status must be either active or inactive',
-  })
-  status: string;
+export class PaymentQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @IsOptional()
+  @IsUUID()
+  orderId?: string;
+
+  @IsOptional()
+  @IsIn(['stripe', 'paypal', 'other'])
+  provider?: string;
+
+  @IsOptional()
+  @IsIn(['pending', 'completed', 'failed', 'refunded'])
+  status?: string;
+}
+
+export class ActivityLogQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  actorId?: string;
+
+  @IsOptional()
+  @IsString()
+  action?: string;
 }

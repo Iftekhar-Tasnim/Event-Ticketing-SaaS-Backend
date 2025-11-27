@@ -1,20 +1,31 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('users')
 export class UserEntity {
-  @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ unique: true })
+  email: string;
+
+  @Column({ name: 'password_hash' })
+  passwordHash: string;
+
+  @Column({ name: 'full_name' })
   fullName: string;
 
-  @Column({ type: 'int', unsigned: true })
-  age: number;
+  @Column({ name: 'is_platform_superadmin', default: false })
+  isPlatformSuperadmin: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: ['active', 'inactive'],
-    default: 'active',
-  })
-  status: string;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

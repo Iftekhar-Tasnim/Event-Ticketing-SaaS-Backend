@@ -1,270 +1,613 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, Like, FindOptionsWhere } from 'typeorm';
 import {
-  CreateAdminDto,
-  UpdateAdminDto,
-  UpdateAdminStatusDto,
   CreateUserDto,
-  AdminQueryDto,
-  CreateTask3UserDto,
-  UpdateUserStatusDto,
+  UpdateUserDto,
+  CreateTenantDto,
+  UpdateTenantDto,
+  UpdateTenantStatusDto,
+  CreateTenantUserDto,
+  UpdateTenantUserDto,
+  UpdateTenantUserStatusDto,
+  CreateWebhookEventDto,
+  UpdateWebhookEventDto,
+  UpdateWebhookEventStatusDto,
+  CreatePaymentDto,
+  UpdatePaymentDto,
+  UpdatePaymentStatusDto,
+  CreateActivityLogDto,
+  UserQueryDto,
+  TenantQueryDto,
+  TenantUserQueryDto,
+  WebhookEventQueryDto,
+  PaymentQueryDto,
+  ActivityLogQueryDto,
 } from './superadmin.dto';
 import { UserEntity } from './user.entity';
+import { TenantEntity } from './tenant.entity';
+import { TenantUserEntity } from './tenant-user.entity';
+import { WebhookEventEntity } from './webhook-event.entity';
+import { PaymentEntity } from './payment.entity';
+import { ActivityLogEntity } from './activity-log.entity';
 
 @Injectable()
 export class SuperAdminService {
   constructor(
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
+    @InjectRepository(TenantEntity)
+    private tenantRepository: Repository<TenantEntity>,
+    @InjectRepository(TenantUserEntity)
+    private tenantUserRepository: Repository<TenantUserEntity>,
+    @InjectRepository(WebhookEventEntity)
+    private webhookEventRepository: Repository<WebhookEventEntity>,
+    @InjectRepository(PaymentEntity)
+    private paymentRepository: Repository<PaymentEntity>,
+    @InjectRepository(ActivityLogEntity)
+    private activityLogRepository: Repository<ActivityLogEntity>,
   ) {}
-  createAdmin(createAdminDto: CreateAdminDto) {
-    return {
-      message: 'Admin created successfully',
-      data: {
-        id: 'admin_001',
-        name: createAdminDto.name,
-        email: createAdminDto.email,
-        tenantId: createAdminDto.tenantId,
-        phone: createAdminDto.phone,
-        role: createAdminDto.role,
-        gender: createAdminDto.gender,
-        nidNumber: createAdminDto.nidNumber,
-        nidImageUrl: createAdminDto.nidImageUrl ?? null,
-        status: createAdminDto.status ?? 'active',
-        permissions: createAdminDto.permissions ?? [
-          'manage-events',
-          'manage-users',
-          'view-reports',
-        ],
-        address: {
-          line1: createAdminDto.addressLine1 ?? 'House 10, Road 12',
-          line2: createAdminDto.addressLine2 ?? 'Sector 11',
-          city: createAdminDto.city ?? 'Dhaka',
-          country: createAdminDto.country ?? 'Bangladesh',
-        },
-      },
-    };
+
+  // User operations (Platform Users)
+  async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
+    const user = this.userRepository.create({
+      email: createUserDto.email,
+      passwordHash: createUserDto.passwordHash,
+      fullName: createUserDto.fullName,
+      isPlatformSuperadmin: createUserDto.isPlatformSuperadmin ?? false,
+    });
+    return this.userRepository.save(user);
   }
 
-  getAllAdmins(query: AdminQueryDto) {
-    const { page = 1, limit = 10, status, role, tenantId, search } = query;
-    return {
-      message: 'Admins retrieved successfully',
-      meta: {
-        page,
-        limit,
-        total: 2,
-        filters: {
-          status: status ?? null,
-          role: role ?? null,
-          tenantId: tenantId ?? null,
-          search: search ?? null,
-        },
-      },
-      data: [
-        {
-          id: 'admin_001',
-          name: 'Iftekhar Tasnim',
-          email: 'iftekhar.tasnim@example.xyz',
-          tenantId: 'tenant_001',
-          phone: '+8801711122233',
-          role: 'owner',
-          gender: 'male',
-          nidNumber: '1234567890123',
-          nidImageUrl: 'https://cdn.example.com/nid/admin_001_front.jpg',
-          status: 'active',
-          permissions: ['manage-events', 'manage-users', 'view-reports'],
-          address: {
-            line1: 'House 10, Road 12',
-            line2: 'Sector 11',
-            city: 'Dhaka',
-            country: 'Bangladesh',
-          },
-        },
-        {
-          id: 'admin_002',
-          name: 'Iftekhar Tasnim',
-          email: 'iftekhar.tasnim2@example.xyz',
-          tenantId: 'tenant_001',
-          phone: '+8801811122233',
-          role: 'admin',
-          gender: 'female',
-          nidNumber: '1234567890124',
-          nidImageUrl: 'https://cdn.example.com/nid/admin_002_front.jpg',
-          status: 'inactive',
-          permissions: ['manage-events', 'view-reports'],
-          address: {
-            line1: 'House 7, Road 5',
-            line2: 'Uttara',
-            city: 'Dhaka',
-            country: 'Bangladesh',
-          },
-        },
-      ],
-    };
-  }
+  async getAllUsers(query: UserQueryDto) {
+    const { page = 1, limit = 10, search } = query;
+    const skip = (page - 1) * limit;
+    const where: FindOptionsWhere<UserEntity> = {};
 
-  getAdminById(id: string) {
-    return {
-      message: 'Admin retrieved successfully',
-      data: {
-        id: id,
-        name: 'Iftekhar Tasnim',
-        email: 'iftekhar.tasnim@example.xyz',
-        status: 'active',
-        tenantId: 'tenant_001',
-        phone: '+8801711122233',
-        role: 'owner',
-        gender: 'male',
-        nidNumber: '1234567890123',
-        nidImageUrl: 'https://cdn.example.com/nid/admin_001_front.jpg',
-        permissions: ['manage-events', 'manage-users', 'view-reports'],
-        address: {
-          line1: 'House 10, Road 12',
-          line2: 'Sector 11',
-          city: 'Dhaka',
-          country: 'Bangladesh',
-        },
-      },
-    };
-  }
+    if (search) {
+      where.email = Like(`%${search}%`);
+    }
 
-  updateAdmin(id: string, updateAdminDto: UpdateAdminDto) {
-    return {
-      message: 'Admin updated successfully',
-      data: {
-        id: id,
-        name: updateAdminDto.name,
-        email: updateAdminDto.email,
-        tenantId: updateAdminDto.tenantId,
-        phone: updateAdminDto.phone,
-        role: updateAdminDto.role,
-        gender: updateAdminDto.gender,
-        nidNumber: updateAdminDto.nidNumber,
-        nidImageUrl: updateAdminDto.nidImageUrl,
-        status: updateAdminDto.status,
-        permissions: updateAdminDto.permissions,
-        address: {
-          line1: updateAdminDto.addressLine1,
-          line2: updateAdminDto.addressLine2,
-          city: updateAdminDto.city,
-          country: updateAdminDto.country,
-        },
-      },
-    };
-  }
+    const [data, total] = await this.userRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
 
-  updateAdminStatus(id: string, updateStatusDto: UpdateAdminStatusDto) {
-    return {
-      message: 'Admin status updated successfully',
-      data: {
-        id: id,
-        status: updateStatusDto.status,
-      },
-    };
-  }
-
-  deleteAdmin(id: string) {
-    return {
-      message: 'Admin deleted successfully',
-      data: {
-        id: id,
-      },
-    };
-  }
-
-  createUser(createUserDto: CreateUserDto) {
-    return {
-      message: 'User created successfully',
-      data: {
-        id: 'user_001',
-        name: createUserDto.name,
-        email: createUserDto.email,
-        tenantId: createUserDto.tenantId,
-        phone: createUserDto.phone,
-        role: createUserDto.role,
-      },
-    };
-  }
-
-  getAllUsers(query: AdminQueryDto) {
-    const { page = 1, limit = 10, tenantId, search } = query;
     return {
       message: 'Users retrieved successfully',
       meta: {
         page,
         limit,
-        total: 2,
+        total,
         filters: {
-          tenantId: tenantId ?? null,
           search: search ?? null,
         },
       },
-      data: [
-        {
-          id: 'user_001',
-          name: 'Iftekhar Tasnim',
-          email: 'iftekhar.tasnim@example.xyz',
-          tenantId: 'tenant_001',
-          phone: '+8801777788899',
-          role: 'admin',
-        },
-        {
-          id: 'user_002',
-          name: 'Iftekhar Tasnim',
-          email: 'iftekhar.tasnim2@example.xyz',
-          tenantId: 'tenant_002',
-          phone: '+8801999988899',
-          role: 'staff',
-        },
-      ],
+      data,
     };
   }
 
-  saveAdminNidImage(id: string, file: Express.Multer.File) {
-    return {
-      message: 'NID image uploaded successfully',
-      data: {
-        adminId: id,
-        file: {
-          originalName: file.originalname,
-          mimeType: file.mimetype,
-          size: file.size,
-        },
-      },
-    };
-  }
-
-  // Task3 User operations
-  async createTask3User(
-    createUserDto: CreateTask3UserDto,
-  ): Promise<UserEntity> {
-    const user = this.userRepository.create(createUserDto);
-    return this.userRepository.save(user);
-  }
-
-  async updateUserStatus(
-    id: number,
-    updateStatusDto: UpdateUserStatusDto,
-  ): Promise<UserEntity> {
-    await this.userRepository.update(id, { status: updateStatusDto.status });
-    const user = await this.userRepository.findOneBy({ id: id });
+  async getUserById(id: string): Promise<UserEntity> {
+    const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       throw new Error(`User with id ${id} not found`);
     }
     return user;
   }
 
-  async getInactiveUsers(): Promise<UserEntity[]> {
-    return this.userRepository.find({
-      where: { status: 'inactive' },
-    });
+  async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserEntity> {
+    const updateData: Partial<UserEntity> = {};
+    if (updateUserDto.email !== undefined) {
+      updateData.email = updateUserDto.email;
+    }
+    if (updateUserDto.passwordHash !== undefined) {
+      updateData.passwordHash = updateUserDto.passwordHash;
+    }
+    if (updateUserDto.fullName !== undefined) {
+      updateData.fullName = updateUserDto.fullName;
+    }
+    if (updateUserDto.isPlatformSuperadmin !== undefined) {
+      updateData.isPlatformSuperadmin = updateUserDto.isPlatformSuperadmin;
+    }
+    await this.userRepository.update(id, updateData);
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    return user;
   }
 
-  async getUsersOlderThan40(): Promise<UserEntity[]> {
-    return this.userRepository.find({
-      where: { age: MoreThan(40) },
+  async deleteUser(id: string): Promise<void> {
+    const result = await this.userRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`User with id ${id} not found`);
+    }
+  }
+
+  // Tenant operations
+  async createTenant(createTenantDto: CreateTenantDto): Promise<TenantEntity> {
+    const tenant = this.tenantRepository.create({
+      name: createTenantDto.name,
+      slug: createTenantDto.slug,
+      brandingSettings: createTenantDto.brandingSettings,
+      status: createTenantDto.status ?? 'pending',
     });
+    return this.tenantRepository.save(tenant);
+  }
+
+  async getAllTenants(query: TenantQueryDto) {
+    const { page = 1, limit = 10, search, status } = query;
+    const skip = (page - 1) * limit;
+    const where: FindOptionsWhere<TenantEntity> = {};
+
+    if (search) {
+      where.name = Like(`%${search}%`);
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [data, total] = await this.tenantRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      message: 'Tenants retrieved successfully',
+      meta: {
+        page,
+        limit,
+        total,
+        filters: {
+          search: search ?? null,
+          status: status ?? null,
+        },
+      },
+      data,
+    };
+  }
+
+  async getTenantById(id: string): Promise<TenantEntity> {
+    const tenant = await this.tenantRepository.findOneBy({ id });
+    if (!tenant) {
+      throw new Error(`Tenant with id ${id} not found`);
+    }
+    return tenant;
+  }
+
+  async updateTenant(
+    id: string,
+    updateTenantDto: UpdateTenantDto,
+  ): Promise<TenantEntity> {
+    await this.tenantRepository.update(id, updateTenantDto);
+    const tenant = await this.tenantRepository.findOneBy({ id });
+    if (!tenant) {
+      throw new Error(`Tenant with id ${id} not found`);
+    }
+    return tenant;
+  }
+
+  async updateTenantStatus(
+    id: string,
+    updateStatusDto: UpdateTenantStatusDto,
+  ): Promise<TenantEntity> {
+    await this.tenantRepository.update(id, { status: updateStatusDto.status });
+    const tenant = await this.tenantRepository.findOneBy({ id });
+    if (!tenant) {
+      throw new Error(`Tenant with id ${id} not found`);
+    }
+    return tenant;
+  }
+
+  async deleteTenant(id: string): Promise<void> {
+    const result = await this.tenantRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`Tenant with id ${id} not found`);
+    }
+  }
+
+  // Tenant User operations
+  async createTenantUser(
+    createTenantUserDto: CreateTenantUserDto,
+  ): Promise<TenantUserEntity> {
+    const tenantUser = this.tenantUserRepository.create({
+      tenantId: createTenantUserDto.tenantId,
+      userId: createTenantUserDto.userId,
+      role: createTenantUserDto.role,
+      status: createTenantUserDto.status ?? 'active',
+      invitedAt: new Date(),
+    });
+    return this.tenantUserRepository.save(tenantUser);
+  }
+
+  async getAllTenantUsers(query: TenantUserQueryDto) {
+    const { page = 1, limit = 10, tenantId, userId, role, status } = query;
+    const skip = (page - 1) * limit;
+    const where: FindOptionsWhere<TenantUserEntity> = {};
+
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+    if (userId) {
+      where.userId = userId;
+    }
+    if (role) {
+      where.role = role;
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [data, total] = await this.tenantUserRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      relations: ['tenant', 'user'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      message: 'Tenant users retrieved successfully',
+      meta: {
+        page,
+        limit,
+        total,
+        filters: {
+          tenantId: tenantId ?? null,
+          userId: userId ?? null,
+          role: role ?? null,
+          status: status ?? null,
+        },
+      },
+      data,
+    };
+  }
+
+  async getTenantUserById(id: string): Promise<TenantUserEntity> {
+    const tenantUser = await this.tenantUserRepository.findOne({
+      where: { id },
+      relations: ['tenant', 'user'],
+    });
+    if (!tenantUser) {
+      throw new Error(`Tenant user with id ${id} not found`);
+    }
+    return tenantUser;
+  }
+
+  async updateTenantUser(
+    id: string,
+    updateTenantUserDto: UpdateTenantUserDto,
+  ): Promise<TenantUserEntity> {
+    await this.tenantUserRepository.update(id, updateTenantUserDto);
+    const tenantUser = await this.tenantUserRepository.findOne({
+      where: { id },
+      relations: ['tenant', 'user'],
+    });
+    if (!tenantUser) {
+      throw new Error(`Tenant user with id ${id} not found`);
+    }
+    return tenantUser;
+  }
+
+  async updateTenantUserStatus(
+    id: string,
+    updateStatusDto: UpdateTenantUserStatusDto,
+  ): Promise<TenantUserEntity> {
+    await this.tenantUserRepository.update(id, {
+      status: updateStatusDto.status,
+    });
+    const tenantUser = await this.tenantUserRepository.findOne({
+      where: { id },
+      relations: ['tenant', 'user'],
+    });
+    if (!tenantUser) {
+      throw new Error(`Tenant user with id ${id} not found`);
+    }
+    return tenantUser;
+  }
+
+  async deleteTenantUser(id: string): Promise<void> {
+    const result = await this.tenantUserRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`Tenant user with id ${id} not found`);
+    }
+  }
+
+  // Webhook Event operations
+  async createWebhookEvent(
+    createWebhookEventDto: CreateWebhookEventDto,
+  ): Promise<WebhookEventEntity> {
+    const webhookEvent = this.webhookEventRepository.create({
+      provider: createWebhookEventDto.provider,
+      eventType: createWebhookEventDto.eventType,
+      payload: createWebhookEventDto.payload,
+      receivedAt: new Date(createWebhookEventDto.receivedAt),
+      status: 'pending',
+    });
+    return this.webhookEventRepository.save(webhookEvent);
+  }
+
+  async getAllWebhookEvents(query: WebhookEventQueryDto) {
+    const { page = 1, limit = 10, provider, eventType, status } = query;
+    const skip = (page - 1) * limit;
+    const where: FindOptionsWhere<WebhookEventEntity> = {};
+
+    if (provider) {
+      where.provider = provider;
+    }
+    if (eventType) {
+      where.eventType = Like(`%${eventType}%`);
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [data, total] = await this.webhookEventRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { receivedAt: 'DESC' },
+    });
+
+    return {
+      message: 'Webhook events retrieved successfully',
+      meta: {
+        page,
+        limit,
+        total,
+        filters: {
+          provider: provider ?? null,
+          eventType: eventType ?? null,
+          status: status ?? null,
+        },
+      },
+      data,
+    };
+  }
+
+  async getWebhookEventById(id: string): Promise<WebhookEventEntity> {
+    const webhookEvent = await this.webhookEventRepository.findOneBy({ id });
+    if (!webhookEvent) {
+      throw new Error(`Webhook event with id ${id} not found`);
+    }
+    return webhookEvent;
+  }
+
+  async updateWebhookEvent(
+    id: string,
+    updateWebhookEventDto: UpdateWebhookEventDto,
+  ): Promise<WebhookEventEntity> {
+    const updateData: Partial<WebhookEventEntity> = {};
+    if (updateWebhookEventDto.processedAt) {
+      updateData.processedAt = new Date(updateWebhookEventDto.processedAt);
+    }
+    if (updateWebhookEventDto.status) {
+      updateData.status = updateWebhookEventDto.status;
+    }
+    if (updateWebhookEventDto.errorMessage !== undefined) {
+      updateData.errorMessage = updateWebhookEventDto.errorMessage;
+    }
+
+    await this.webhookEventRepository.update(id, updateData);
+    const webhookEvent = await this.webhookEventRepository.findOneBy({ id });
+    if (!webhookEvent) {
+      throw new Error(`Webhook event with id ${id} not found`);
+    }
+    return webhookEvent;
+  }
+
+  async updateWebhookEventStatus(
+    id: string,
+    updateStatusDto: UpdateWebhookEventStatusDto,
+  ): Promise<WebhookEventEntity> {
+    const updateData: Partial<WebhookEventEntity> = {
+      status: updateStatusDto.status,
+      processedAt: new Date(),
+    };
+    if (updateStatusDto.errorMessage) {
+      updateData.errorMessage = updateStatusDto.errorMessage;
+    }
+
+    await this.webhookEventRepository.update(id, updateData);
+    const webhookEvent = await this.webhookEventRepository.findOneBy({ id });
+    if (!webhookEvent) {
+      throw new Error(`Webhook event with id ${id} not found`);
+    }
+    return webhookEvent;
+  }
+
+  async deleteWebhookEvent(id: string): Promise<void> {
+    const result = await this.webhookEventRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`Webhook event with id ${id} not found`);
+    }
+  }
+
+  // Payment operations
+  async createPayment(
+    createPaymentDto: CreatePaymentDto,
+  ): Promise<PaymentEntity> {
+    const paymentData: Partial<PaymentEntity> = {
+      orderId: createPaymentDto.orderId,
+      provider: createPaymentDto.provider,
+      providerReference: createPaymentDto.providerReference,
+      status: createPaymentDto.status ?? 'pending',
+      amountCents: createPaymentDto.amountCents,
+      currency: createPaymentDto.currency,
+      payload: createPaymentDto.payload,
+    };
+    if (createPaymentDto.processedAt) {
+      paymentData.processedAt = new Date(createPaymentDto.processedAt);
+    }
+    const payment = this.paymentRepository.create(paymentData);
+    return this.paymentRepository.save(payment);
+  }
+
+  async getAllPayments(query: PaymentQueryDto) {
+    const { page = 1, limit = 10, orderId, provider, status } = query;
+    const skip = (page - 1) * limit;
+    const where: FindOptionsWhere<PaymentEntity> = {};
+
+    if (orderId) {
+      where.orderId = orderId;
+    }
+    if (provider) {
+      where.provider = provider;
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [data, total] = await this.paymentRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      message: 'Payments retrieved successfully',
+      meta: {
+        page,
+        limit,
+        total,
+        filters: {
+          orderId: orderId ?? null,
+          provider: provider ?? null,
+          status: status ?? null,
+        },
+      },
+      data,
+    };
+  }
+
+  async getPaymentById(id: string): Promise<PaymentEntity> {
+    const payment = await this.paymentRepository.findOneBy({ id });
+    if (!payment) {
+      throw new Error(`Payment with id ${id} not found`);
+    }
+    return payment;
+  }
+
+  async updatePayment(
+    id: string,
+    updatePaymentDto: UpdatePaymentDto,
+  ): Promise<PaymentEntity> {
+    const updateData: Partial<PaymentEntity> = {};
+    if (updatePaymentDto.status) {
+      updateData.status = updatePaymentDto.status;
+    }
+    if (updatePaymentDto.processedAt) {
+      updateData.processedAt = new Date(updatePaymentDto.processedAt);
+    }
+    if (updatePaymentDto.payload) {
+      updateData.payload = updatePaymentDto.payload;
+    }
+
+    await this.paymentRepository.update(id, updateData);
+    const payment = await this.paymentRepository.findOneBy({ id });
+    if (!payment) {
+      throw new Error(`Payment with id ${id} not found`);
+    }
+    return payment;
+  }
+
+  async updatePaymentStatus(
+    id: string,
+    updateStatusDto: UpdatePaymentStatusDto,
+  ): Promise<PaymentEntity> {
+    await this.paymentRepository.update(id, {
+      status: updateStatusDto.status,
+      processedAt: new Date(),
+    });
+    const payment = await this.paymentRepository.findOneBy({ id });
+    if (!payment) {
+      throw new Error(`Payment with id ${id} not found`);
+    }
+    return payment;
+  }
+
+  async deletePayment(id: string): Promise<void> {
+    const result = await this.paymentRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`Payment with id ${id} not found`);
+    }
+  }
+
+  // Activity Log operations
+  async createActivityLog(
+    createActivityLogDto: CreateActivityLogDto,
+  ): Promise<ActivityLogEntity> {
+    const activityLog = this.activityLogRepository.create({
+      tenantId: createActivityLogDto.tenantId,
+      actorId: createActivityLogDto.actorId,
+      action: createActivityLogDto.action,
+      metadata: createActivityLogDto.metadata,
+    });
+    return this.activityLogRepository.save(activityLog);
+  }
+
+  async getAllActivityLogs(query: ActivityLogQueryDto) {
+    const { page = 1, limit = 10, tenantId, actorId, action } = query;
+    const skip = (page - 1) * limit;
+    const where: FindOptionsWhere<ActivityLogEntity> = {};
+
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+    if (actorId) {
+      where.actorId = actorId;
+    }
+    if (action) {
+      where.action = Like(`%${action}%`);
+    }
+
+    const [data, total] = await this.activityLogRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      relations: ['tenant', 'actor'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      message: 'Activity logs retrieved successfully',
+      meta: {
+        page,
+        limit,
+        total,
+        filters: {
+          tenantId: tenantId ?? null,
+          actorId: actorId ?? null,
+          action: action ?? null,
+        },
+      },
+      data,
+    };
+  }
+
+  async getActivityLogById(id: string): Promise<ActivityLogEntity> {
+    const activityLog = await this.activityLogRepository.findOne({
+      where: { id },
+      relations: ['tenant', 'actor'],
+    });
+    if (!activityLog) {
+      throw new Error(`Activity log with id ${id} not found`);
+    }
+    return activityLog;
+  }
+
+  async deleteActivityLog(id: string): Promise<void> {
+    const result = await this.activityLogRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`Activity log with id ${id} not found`);
+    }
   }
 }
