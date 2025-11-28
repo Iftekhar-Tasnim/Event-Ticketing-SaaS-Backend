@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SuperAdminModule } from './superadmin/superadmin.module';
+import { SuperAdminModule } from './admin/superadmin.module';
 
 @Module({
   imports: [
