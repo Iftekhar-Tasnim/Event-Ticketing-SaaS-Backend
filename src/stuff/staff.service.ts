@@ -592,9 +592,9 @@ export class StaffService {
     const tickets = await this.ticketRepo
       .createQueryBuilder('ticket')
       .innerJoinAndSelect('ticket.order', 'order')
-      .where('order.tenantId = :tenantId', { tenantId })
+      .where('order.tenant_id = :tenantId', { tenantId })
       .andWhere(
-        '(ticket.attendeeName ILIKE :q OR ticket.attendeeEmail ILIKE :q)',
+        '(ticket.attendee_name ILIKE :q OR ticket.attendee_email ILIKE :q)',
         { q: `%${searchTerm}%` },
       )
       .orderBy('ticket.created_at', 'DESC')
