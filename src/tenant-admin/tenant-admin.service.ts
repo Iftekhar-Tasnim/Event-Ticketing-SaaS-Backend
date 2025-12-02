@@ -6,6 +6,7 @@ import {
   createEventsDto, EventSessionsDto, CreateTicketsDto, DiscountCodesDto, OrdersDto, TicketsDto,
   EventStatus, TicketTypeStatus, DiscountStatus, OrderStatus, TicketStatus 
 } from './tenant-admin.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class TenantAdminService {
@@ -16,6 +17,7 @@ export class TenantAdminService {
     @InjectRepository(DiscountCode) private discountCodeRepository: Repository<DiscountCode>,
     @InjectRepository(Order) private orderRepository: Repository<Order>,
     @InjectRepository(Ticket) private ticketRepository: Repository<Ticket>,
+    private readonly mailerService: MailerService
   ) {}
 
   async createEvent(createEventsDto: createEventsDto): Promise<Event> {
@@ -338,4 +340,20 @@ export class TenantAdminService {
       ordersCount: orders.length,
     };
   }
+
+async sendUserWelcomeEmail(email: string, name: string): Promise<string> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Welcome to our platform!', 
+        text: `Hello ${name},\n\nWelcome to our platform. We are glad to have you!`,
+      });
+
+      return 'Email sent successfully';
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw new InternalServerErrorException('Failed to send email');
+    }
+  }
+
 }

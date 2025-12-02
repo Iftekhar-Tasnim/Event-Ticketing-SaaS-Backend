@@ -175,4 +175,9 @@ export class TenantAdminController {
   async getEventStats(@Param('eventId') eventId: string) {
     return await this.tenantAdminService.getEventStats(eventId);
   }
+
+  @Post('notify')
+  async sendEmail(@Body() body: { email: string; name: string }) {
+    return await this.tenantAdminService.sendUserWelcomeEmail(body.email, body.name);
+  }
 }
