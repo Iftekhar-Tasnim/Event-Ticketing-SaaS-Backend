@@ -34,11 +34,11 @@ Think of the database as different notebooks, each keeping track of a part of th
 | Identity | `users` | Global user records | `id`, `email`, `password_hash`, `full_name`, `is_platform_admin` |
 | Events | `events` | Event definitions | `id`, `tenant_id`, `slug`, `status`, `venue`, `start_at`, `end_at` |
 | Events | `event_sessions` | Session blocks for multi-day events | `id`, `event_id`, `start_at`, `end_at`, `title` |
-| Ticketing | `ticket_types` | Pricing tiers | `id`, `event_id`, `name`, `price_cents`, `currency` (BDT), `quantity_total`, `quantity_sold` |
-| Orders | `orders` | Overall checkout records | `id`, `tenant_id`, `event_id`, `buyer_email`, `total_cents` (BDT), `status`, `payment_intent_id` |
-| Orders | `order_items` | Line items under an order | `id`, `order_id`, `ticket_type_id`, `unit_price_cents`, `quantity` |
+| Ticketing | `ticket_types` | Pricing tiers | `id`, `event_id`, `name`, `price_taka` (BDT), `currency` (BDT), `quantity_total`, `quantity_sold` |
+| Orders | `orders` | Overall checkout records | `id`, `tenant_id`, `event_id`, `buyer_email`, `total_taka` (BDT), `status`, `payment_intent_id`, `public_lookup_token` |
+| Orders | `order_items` | Line items under an order | `id`, `order_id`, `ticket_type_id`, `unit_price_taka`, `quantity`, `subtotal_taka` |
 | Tickets | `tickets` | Individual QR passes | `id`, `order_id`, `ticket_type_id`, `attendee_name`, `qr_code_payload`, `checked_in_at` |
-| Payments | `payments` | Provider transactions | `id`, `order_id`, `provider`, `provider_reference`, `status`, `payload` |
+| Payments | `payments` | Provider transactions | `id`, `order_id`, `provider` (Stripe/bKash/Nagad/Rocket), `provider_reference`, `status`, `amount_cents` (BDT), `currency` (BDT), `processed_at`, `payload` |
 | Discounts | `discount_codes` | Optional promotions | `id`, `event_id`, `code`, `max_redemptions`, `times_redeemed`, `expires_at` |
 | Operations | `webhook_events` | Raw webhook storage | `id`, `provider`, `event_type`, `payload`, `received_at`, `processed_at`, `status` |
 | Audit | `activity_logs` | Staff/TenantAdmin actions | `id`, `tenant_id`, `actor_id`, `action`, `metadata` |
@@ -105,12 +105,12 @@ Think of the database as different notebooks, each keeping track of a part of th
 | Table | Columns |
 | --- | --- |
 | `tenants` | same as above |
-| `events` | `id`, `tenant_id`, `name`, `slug`, `description`, `venue`, `city` (e.g., Dhaka, Chittagong, Sylhet), `country` (Bangladesh), `start_at`, `end_at` (BST/UTC+6), `status`, `is_public`, `seo_meta`, `created_at`, `updated_at` |
+| `events` | `id`, `tenant_id`, `name`, `slug`, `description`, `venue`, `city` (e.g., Dhaka, Chittagong, Sylhet), `country` (Bangladesh), `start_at`, `end_at` (BST/UTC+6), `status`, `is_public`, `seo_meta`, `hero_image_url`, `created_at`, `updated_at` |
 | `event_sessions` | `id`, `event_id`, `title`, `description`, `start_at`, `end_at` |
-| `ticket_types` | `id`, `event_id`, `name`, `description`, `price_cents` (BDT), `currency` (BDT), `quantity_total`, `quantity_sold`, `sales_start`, `sales_end` (BST), `status` |
+| `ticket_types` | `id`, `event_id`, `name`, `description`, `price_taka` (BDT), `currency` (BDT), `quantity_total`, `quantity_sold`, `sales_start`, `sales_end` (BST), `status` |
 | `discount_codes` | `id`, `event_id`, `code`, `description`, `max_redemptions`, `times_redeemed`, `discount_type`, `discount_value`, `starts_at`, `expires_at`, `status` |
-| `orders` | `id`, `tenant_id`, `event_id`, `buyer_email`, `buyer_name`, `total_cents` (BDT), `currency` (BDT), `status`, `payment_intent_id`, `created_at`, `updated_at` |
-| `order_items` | `id`, `order_id`, `ticket_type_id`, `unit_price_cents`, `quantity`, `subtotal_cents` |
+| `orders` | `id`, `tenant_id`, `event_id`, `buyer_email`, `buyer_name`, `total_taka` (BDT), `currency` (BDT), `status`, `payment_intent_id`, `public_lookup_token`, `created_at`, `updated_at` |
+| `order_items` | `id`, `order_id`, `ticket_type_id`, `unit_price_taka`, `quantity`, `subtotal_taka` |
 | `tickets` | `id`, `order_id`, `ticket_type_id`, `attendee_name`, `attendee_email`, `qr_code_payload`, `qr_signature`, `status`, `checked_in_at`, `seat_label` |
 | `tenant_users` | same as above |
 | `activity_logs` | same as above |
@@ -146,11 +146,11 @@ Think of the database as different notebooks, each keeping track of a part of th
 
 | Table | Columns |
 | --- | --- |
-| `events` | public subset: `slug`, `name`, `description`, `venue`, `start_at`, `end_at`, `status`, `hero_image_url` |
+| `events` | public subset: `slug`, `name`, `description`, `venue`, `start_at`, `end_at`, `status`, `hero_image_url`, `is_public` |
 | `event_sessions` | optional schedule details |
-| `ticket_types` | `name`, `price_cents` (BDT), `currency` (BDT), `sales_start`, `sales_end` (BST), `status`, `quantity_total`, `quantity_sold` |
-| `orders` | `id`, `tenant_id`, `event_id`, `buyer_email`, `buyer_name`, `total_cents` (BDT), `status`, `public_lookup_token` |
-| `order_items` | `ticket_type_id`, `quantity`, `unit_price_cents` (BDT), `subtotal_cents` (BDT) |
+| `ticket_types` | `name`, `price_taka` (BDT), `currency` (BDT), `sales_start`, `sales_end` (BST), `status`, `quantity_total`, `quantity_sold` |
+| `orders` | `id`, `tenant_id`, `event_id`, `buyer_email`, `buyer_name`, `total_taka` (BDT), `status`, `public_lookup_token` |
+| `order_items` | `ticket_type_id`, `quantity`, `unit_price_taka` (BDT), `subtotal_taka` (BDT) |
 | `tickets` | `id`, `order_id`, `ticket_type_id`, `attendee_name`, `qr_code_payload`, `status` |
 | `discount_codes` | `code`, `discount_type`, `discount_value`, `expires_at` (BST), `status` |
 | `payments` | `provider_reference`, `status`, `amount_cents` (BDT), `currency` (BDT) (displayed via order history) |

@@ -1,0 +1,201 @@
+================================================================================
+                    QUICK SETUP GUIDE - TEST USERS
+                    Event Ticketing System - Database Setup
+================================================================================
+
+This guide will help you quickly set up test users for Postman API testing.
+
+================================================================================
+OPTION 1: USING SQL SCRIPT (RECOMMENDED)
+================================================================================
+
+1. GENERATE PASSWORD HASHES (if needed):
+   -------------------------------------
+   If the bcrypt hashes in TEST_USERS_SETUP.sql don't work, generate new ones:
+   
+   a) Install bcrypt:
+      npm install bcrypt
+   
+   b) Run the hash generator:
+      node Postman_testfiles/generate_password_hashes.js
+   
+   c) Copy the generated hashes and replace them in TEST_USERS_SETUP.sql
+
+2. RUN THE SQL SCRIPT:
+   --------------------
+   a) Connect to your PostgreSQL database:
+      psql -U postgres -d Saas
+   
+   b) Run the SQL script:
+      \i Postman_testfiles/TEST_USERS_SETUP.sql
+   
+   OR copy and paste the SQL content directly into your database client
+
+3. VERIFY USERS WERE CREATED:
+   ---------------------------
+   Run the verification queries at the end of TEST_USERS_SETUP.sql
+
+================================================================================
+OPTION 2: USING NESTJS APPLICATION (ALTERNATIVE)
+================================================================================
+
+You can also create users through the API endpoints:
+
+1. START YOUR NESTJS SERVER:
+   --------------------------
+   npm run start:dev
+
+2. CREATE PLATFORM ADMIN (via direct database insert or seed script):
+   --------------------------------------------------------------------
+   You'll need to manually insert the platform admin first, then use API:
+
+3. CREATE TENANT (as Platform Admin):
+   -----------------------------------
+   POST http://localhost:3000/admin/tenants
+   {
+     "name": "Test Event Company",
+     "slug": "test-tenant",
+     "brandingSettings": {
+       "logo": "https://example.com/logo.png",
+       "primaryColor": "#FF5733"
+     },
+     "status": "active"
+   }
+
+4. CREATE TENANT ADMIN USER (as Platform Admin):
+   ----------------------------------------------
+   a) First create the user:
+      POST http://localhost:3000/admin/users
+      {
+        "email": "tenantadmin@test.com",
+        "password": "Password@123",
+        "fullName": "Tenant Admin User",
+        "isPlatformAdmin": false
+      }
+   
+   b) Then link to tenant:
+      POST http://localhost:3000/admin/tenant-users
+      {
+        "tenantId": "<tenant-id-from-step-3>",
+        "userId": "<user-id-from-step-4a>",
+        "role": "TenantAdmin",
+        "status": "active"
+      }
+
+5. CREATE STAFF USER (as TenantAdmin):
+   ------------------------------------
+   POST http://localhost:3000/tenant-admin/tenant-users
+   {
+     "email": "staff@test.com",
+     "password": "Password@123",
+     "fullName": "Staff Member",
+     "status": "active"
+   }
+
+================================================================================
+TEST CREDENTIALS
+================================================================================
+
+After setup, use these credentials in Postman:
+
+┌─────────────────────────┬──────────────────────┬──────────────────┐
+│ User Type               │ Email                │ Password         │
+├─────────────────────────┼──────────────────────┼──────────────────┤
+│ Platform Admin          │ admin@platform.com    │ Admin@123        │
+│ TenantAdmin             │ tenantadmin@test.com  │ Password@123     │
+│ Staff (Checker)         │ staff@test.com       │ Password@123     │
+│ Staff (Supervisor)      │ supervisor@test.com   │ Password@123     │
+└─────────────────────────┴──────────────────────┴──────────────────┘
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ISSUE: Password hash doesn't work
+----------------------------------
+- Generate new hashes using generate_password_hashes.js
+- Make sure bcrypt is installed: npm install bcrypt
+- Replace hashes in TEST_USERS_SETUP.sql
+
+ISSUE: Users created but can't login
+-------------------------------------
+- Verify password hash is correct
+- Check that TenantUserEntity exists for TenantAdmin/Staff
+- Verify tenant status is 'active'
+- Verify TenantUserEntity status is 'active'
+
+ISSUE: TenantAdmin can't access tenant-admin endpoints
+-------------------------------------------------------
+- Verify TenantUserEntity.role = 'TenantAdmin'
+- Verify TenantUserEntity.status = 'active'
+- Check JWT token contains correct role and tenantId
+
+ISSUE: Staff can't access staff endpoints
+------------------------------------------
+- Verify TenantUserEntity.role = 'staff'
+- Verify StaffEntity exists (auto-created on first access)
+- Check JWT token contains correct role and tenantId
+
+ISSUE: Duplicate key errors
+-----------------------------
+- The SQL script uses ON CONFLICT, so it's safe to run multiple times
+- If you get errors, check for existing records first
+- Use the DELETE statements at the top of the SQL file to clean up
+
+================================================================================
+VERIFICATION STEPS
+================================================================================
+
+1. CHECK PLATFORM ADMIN:
+   ----------------------
+   SELECT * FROM users WHERE email = 'admin@platform.com';
+   -- Should return 1 row with is_platform_admin = true
+
+2. CHECK TENANT:
+   -------------
+   SELECT * FROM tenants WHERE slug = 'test-tenant';
+   -- Should return 1 row with status = 'active'
+
+3. CHECK TENANT ADMIN:
+   -------------------
+   SELECT u.*, tu.role, tu.status, t.name as tenant_name
+   FROM users u
+   JOIN tenant_users tu ON u.id = tu.user_id
+   JOIN tenants t ON tu.tenant_id = t.id
+   WHERE u.email = 'tenantadmin@test.com';
+   -- Should return 1 row with role = 'TenantAdmin'
+
+4. CHECK STAFF:
+   ------------
+   SELECT u.*, tu.role, tu.status, s.position, s.is_active, t.name as tenant_name
+   FROM users u
+   JOIN tenant_users tu ON u.id = tu.user_id
+   JOIN tenants t ON tu.tenant_id = t.id
+   LEFT JOIN staff s ON u.id = s.user_id AND t.id = s.tenant_id
+   WHERE u.email IN ('staff@test.com', 'supervisor@test.com');
+   -- Should return 2 rows with role = 'staff'
+
+5. TEST LOGIN:
+   ------------
+   Use Postman to test login with each user:
+   POST http://localhost:3000/auth/login
+   {
+     "email": "admin@platform.com",
+     "password": "Admin@123"
+   }
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+After setting up test users:
+
+1. Import Postman collections (if not already done)
+2. Update base_url in collections if needed
+3. Test login with each user type
+4. Follow TEST_INSTRUCTIONS.txt for testing workflows
+
+================================================================================
+END OF GUIDE
+================================================================================
+

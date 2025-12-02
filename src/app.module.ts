@@ -4,6 +4,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantAdminModule } from './tenant-admin/tenant-admin.module';
 import { StaffModule } from './stuff/staff.module';
+import { AttendeeModule } from './attendee/attendee.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { StaffModule } from './stuff/staff.module';
     AdminModule,
     AuthModule,
     StaffModule,
+    AttendeeModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',

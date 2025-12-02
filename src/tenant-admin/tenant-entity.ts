@@ -44,6 +44,15 @@ export class Event {
   @Column('varchar', { length: 50, default: 'draft' })
   status: 'draft' | 'scheduled' | 'active' | 'cancelled' | 'completed';
 
+  @Column('boolean', { default: false, name: 'is_public' })
+  is_public: boolean;
+
+  @Column('jsonb', { nullable: true, name: 'seo_meta' })
+  seo_meta: Record<string, any> | null;
+
+  @Column('varchar', { length: 500, nullable: true, name: 'hero_image_url' })
+  hero_image_url: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 
@@ -218,6 +227,9 @@ export class Order {
   @Column('varchar', { length: 255, nullable: true })
   payment_intent_id: string;
 
+  @Column('varchar', { length: 100, nullable: true, name: 'public_lookup_token' })
+  public_lookup_token: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 
@@ -228,8 +240,46 @@ export class Order {
   @JoinColumn({ name: 'event_id' })
   event: Event;
 
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
+  orderItems: OrderItem[];
+
   @OneToMany(() => Ticket, (ticket) => ticket.order)
   tickets: Ticket[];
+}
+
+@Entity('order_items')
+export class OrderItem {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column('uuid')
+  order_id: string;
+
+  @Column('uuid')
+  ticket_type_id: string;
+
+  @Column('bigint')
+  unit_price_taka: number;
+
+  @Column('integer')
+  quantity: number;
+
+  @Column('bigint')
+  subtotal_taka: number;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  @ManyToOne(() => Order, (order) => order.orderItems)
+  @JoinColumn({ name: 'order_id' })
+  order: Order;
+
+  @ManyToOne(() => TicketType)
+  @JoinColumn({ name: 'ticket_type_id' })
+  ticketType: TicketType;
 }
 
 @Entity('tickets')

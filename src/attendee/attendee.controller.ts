@@ -1,67 +1,131 @@
-import { Controller, Get, Post, Put, Body, Query, Patch, Delete, Param, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UsePipes,
+  ValidationPipe,
+  HttpCode,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { AttendeeService } from './attendee.service';
-import { AttendeeDto, FeedbackDto, MessageDto } from './attendee.dto';
+import {
+  CheckoutDto,
+  ValidateDiscountCodeDto,
+  OrderLookupDto,
+} from './attendee.dto';
 
 @Controller('attendee')
 export class AttendeeController {
-    constructor(private readonly attendeeService: AttendeeService) { }
+  constructor(private readonly attendeeService: AttendeeService) {}
 
-    @Post('create-account')
-    @UsePipes(new ValidationPipe())
-    createAccount(@Body() data: AttendeeDto) {
-        return this.attendeeService.createAccount(data);
+  /**
+   * GET /attendee/events
+   * Get all public events
+   */
+  @Get('events')
+  @HttpCode(HttpStatus.OK)
+  getAllEvents() {
+    return this.attendeeService.getAllPublicEvents();
+  }
+
+  /**
+   * GET /attendee/events/:slug
+   * Get event by slug
+   */
+  @Get('events/slug/:slug')
+  @HttpCode(HttpStatus.OK)
+  getEventBySlug(@Param('slug') slug: string) {
+    return this.attendeeService.getEventBySlug(slug);
+  }
+
+  /**
+   * GET /attendee/events/:id
+   * Get event by ID
+   */
+  @Get('events/:id')
+  @HttpCode(HttpStatus.OK)
+  getEventById(@Param('id') id: string) {
+    return this.attendeeService.getEventById(id);
+  }
+
+  /**
+   * GET /attendee/events/:eventId/ticket-types
+   * Get ticket types for an event
+   */
+  @Get('events/:eventId/ticket-types')
+  @HttpCode(HttpStatus.OK)
+  getTicketTypesForEvent(@Param('eventId') eventId: string) {
+    return this.attendeeService.getTicketTypesForEvent(eventId);
+  }
+
+  /**
+   * POST /attendee/discount-codes/validate
+   * Validate a discount code
+   */
+  @Post('discount-codes/validate')
+  @UsePipes(new ValidationPipe())
+  @HttpCode(HttpStatus.OK)
+  validateDiscountCode(@Body() dto: ValidateDiscountCodeDto) {
+    return this.attendeeService.validateDiscountCode(dto);
+  }
+
+  /**
+   * POST /attendee/checkout
+   * Create order and tickets (checkout flow)
+   */
+  @Post('checkout')
+  @UsePipes(new ValidationPipe())
+  @HttpCode(HttpStatus.CREATED)
+  checkout(@Body() checkoutDto: CheckoutDto) {
+    return this.attendeeService.checkout(checkoutDto);
+  }
+
+  /**
+   * GET /attendee/orders
+   * Get order history by email
+   */
+  @Get('orders')
+  @HttpCode(HttpStatus.OK)
+  getOrdersByEmail(@Query('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email query parameter is required');
     }
+    return this.attendeeService.getOrdersByEmail(email);
+  }
 
-    @Post('login')
-    login(@Body('email') email: string, @Body('password') password: string) {
-        return this.attendeeService.login(email, password);
+  /**
+   * GET /attendee/orders/:orderId
+   * Get order by ID (requires email query param for verification)
+   */
+  @Get('orders/:orderId')
+  @HttpCode(HttpStatus.OK)
+  getOrderById(
+    @Param('orderId') orderId: string,
+    @Query('email') email: string,
+  ) {
+    if (!email) {
+      throw new BadRequestException('Email query parameter is required');
     }
+    return this.attendeeService.getOrderById(orderId, email);
+  }
 
-    @Get('view-account')
-    viewAccount() {
-        return this.attendeeService.viewAccount();
+  /**
+   * GET /attendee/orders/:orderId/tickets
+   * Get tickets for an order (requires email query param for verification)
+   */
+  @Get('orders/:orderId/tickets')
+  @HttpCode(HttpStatus.OK)
+  getTicketsForOrder(
+    @Param('orderId') orderId: string,
+    @Query('email') email: string,
+  ) {
+    if (!email) {
+      throw new BadRequestException('Email query parameter is required');
     }
-
-    @Put('update-account')
-    @UsePipes(new ValidationPipe())
-    updateAccount(@Body() data: AttendeeDto) {
-        return this.attendeeService.updateAccount(data);
-    }
-
-    @Delete('delete-account')
-    deleteAccount() {
-        return this.attendeeService.deleteAccount();
-    }
-
-    @Get('events')
-    getAllEvents() {
-        return this.attendeeService.getAllEvents();
-    }
-
-    @Get('search-events-by-name/:name')
-    searchEvents(@Param('name') name: string) {
-        return this.attendeeService.searchEventByName(name);
-    }
-
-    @Patch('book-event')
-    bookEvent(@Query('eventId') eventId: string) {
-        return this.attendeeService.bookEvent(eventId);
-    }
-
-
-    @Post('make-payment')
-    makePayment(@Body('eventId') eventId: string, @Body('amount') amount: number) {
-        return this.attendeeService.makePayment(eventId, amount);
-    }
-
-    @Post('provide-feedback')
-    provideFeedback(@Body() feedback: FeedbackDto) {
-        return this.attendeeService.provideFeedback(feedback);
-    }
-
-    @Post('send-message')
-    sendMessage(@Body() data: MessageDto) {
-        return this.attendeeService.sendMessage(data);
-    }
+    return this.attendeeService.getTicketsForOrder(orderId, email);
+  }
 }
-

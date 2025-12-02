@@ -8,6 +8,7 @@ import {
   TicketType,
   DiscountCode,
   Order,
+  OrderItem,
   Ticket,
 } from './tenant-entity';
 import { UserEntity } from '../admin/user.entity';
@@ -22,6 +23,7 @@ import { TenantEntity } from '../admin/tenant.entity';
       TicketType,
       DiscountCode,
       Order,
+      OrderItem,
       Ticket,
       UserEntity,
       TenantUserEntity,
