@@ -10,6 +10,9 @@ import {
   Order,
   Ticket,
 } from './tenant-entity';
+import { UserEntity } from '../admin/user.entity';
+import { TenantUserEntity } from '../admin/tenant-user.entity';
+import { TenantEntity } from '../admin/tenant.entity';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import {
       DiscountCode,
       Order,
       Ticket,
+      UserEntity,
+      TenantUserEntity,
+      TenantEntity,
     ]),
   ],
   controllers: [TenantAdminController],

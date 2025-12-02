@@ -1,0 +1,534 @@
+================================================================================
+              EVENT TICKETING SYSTEM - PROJECT DIAGRAM & RELATIONS
+                    Database Schema & Entity Relationships
+================================================================================
+
+OVERVIEW
+--------
+This document describes the complete database schema, entity relationships,
+and how different user types interact with the system.
+
+================================================================================
+DATABASE ENTITIES & TABLES
+================================================================================
+
+1. USERS TABLE (users)
+   - id (UUID, Primary Key)
+   - email (String, Unique)
+   - password_hash (String)
+   - full_name (String)
+   - is_platform_admin (Boolean)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+2. TENANTS TABLE (tenants)
+   - id (UUID, Primary Key)
+   - name (String)
+   - slug (String, Unique)
+   - branding_settings (JSONB)
+   - status (Enum: active, suspended, pending)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+3. TENANT_USERS TABLE (tenant_users)
+   - id (UUID, Primary Key)
+   - tenant_id (UUID, Foreign Key → tenants.id)
+   - user_id (UUID, Foreign Key → users.id)
+   - role (Enum: TenantAdmin, staff)
+   - status (Enum: active, inactive, suspended)
+   - invited_at (Timestamp)
+   - last_login_at (Timestamp)
+   - created_at (Timestamp)
+
+4. STAFF TABLE (staff)
+   - id (UUID, Primary Key)
+   - tenant_id (UUID, Foreign Key → tenants.id)
+   - user_id (UUID, Foreign Key → users.id, Unique)
+   - full_name (String)
+   - position (String: CHECKER, SUPERVISOR, SUPPORT)
+   - phone_number (String, Nullable)
+   - gender (String, Nullable)
+   - is_active (Boolean)
+   - last_login_at (Timestamp, Nullable)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+5. EVENTS TABLE (events)
+   - id (UUID, Primary Key)
+   - tenant_id (UUID, Foreign Key → tenants.id)
+   - name (String)
+   - slug (String)
+   - description (Text)
+   - venue (String)
+   - city (String)
+   - country (String)
+   - start_at (Timestamp)
+   - end_at (Timestamp)
+   - status (Enum: draft, scheduled, active, cancelled, completed)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+6. EVENT_SESSIONS TABLE (event_sessions)
+   - id (UUID, Primary Key)
+   - event_id (UUID, Foreign Key → events.id)
+   - title (String)
+   - description (Text)
+   - start_at (Timestamp)
+   - end_at (Timestamp)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+7. TICKET_TYPES TABLE (ticket_types)
+   - id (UUID, Primary Key)
+   - event_id (UUID, Foreign Key → events.id)
+   - name (String)
+   - description (Text)
+   - price_taka (BigInt)
+   - currency (String, Default: BDT)
+   - quantity_total (Integer)
+   - quantity_sold (Integer, Default: 0)
+   - sales_start (Timestamp)
+   - sales_end (Timestamp)
+   - status (Enum: draft, active, paused, sold_out, closed)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+8. DISCOUNT_CODES TABLE (discount_codes)
+   - id (UUID, Primary Key)
+   - event_id (UUID, Foreign Key → events.id)
+   - code (String, Unique)
+   - description (Text)
+   - max_redemptions (Integer)
+   - times_redeemed (Integer, Default: 0)
+   - discount_type (Enum: percentage, fixed_amount)
+   - discount_value (BigInt)
+   - starts_at (Timestamp)
+   - expires_at (Timestamp)
+   - status (Enum: active, expired, disabled)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+9. ORDERS TABLE (orders)
+   - id (UUID, Primary Key)
+   - tenant_id (UUID, Foreign Key → tenants.id)
+   - event_id (UUID, Foreign Key → events.id)
+   - buyer_email (String)
+   - buyer_name (String)
+   - total_taka (BigInt)
+   - currency (String, Default: BDT)
+   - status (Enum: pending, completed, failed, cancelled, refunded)
+   - payment_intent_id (String, Nullable)
+   - created_at (Timestamp)
+   - updated_at (Timestamp)
+
+10. TICKETS TABLE (tickets)
+    - id (UUID, Primary Key)
+    - order_id (UUID, Foreign Key → orders.id)
+    - ticket_type_id (UUID, Foreign Key → ticket_types.id)
+    - attendee_name (String)
+    - attendee_email (String)
+    - qr_code_payload (Text)
+    - qr_signature (Text)
+    - status (Enum: valid, scanned, used, cancelled, refunded)
+    - checked_in_at (Timestamp, Nullable)
+    - seat_label (String, Nullable)
+    - created_at (Timestamp)
+    - updated_at (Timestamp)
+
+11. ACTIVITY_LOGS TABLE (activity_logs)
+    - id (UUID, Primary Key)
+    - user_id (UUID, Foreign Key → users.id, Nullable)
+    - staff_id (UUID, Foreign Key → staff.id, Nullable)
+    - action (String)
+    - description (Text)
+    - metadata (JSONB, Nullable)
+    - created_at (Timestamp)
+
+12. WEBHOOK_EVENTS TABLE (webhook_events)
+    - id (UUID, Primary Key)
+    - event_type (String)
+    - payload (JSONB)
+    - status (Enum: pending, completed, failed)
+    - created_at (Timestamp)
+    - updated_at (Timestamp)
+
+13. PAYMENTS TABLE (payments)
+    - id (UUID, Primary Key)
+    - order_id (UUID, Foreign Key → orders.id)
+    - amount (BigInt)
+    - currency (String)
+    - payment_method (String)
+    - status (Enum: pending, completed, failed, refunded)
+    - created_at (Timestamp)
+    - updated_at (Timestamp)
+
+================================================================================
+ENTITY RELATIONSHIPS
+================================================================================
+
+HIERARCHICAL STRUCTURE:
+-----------------------
+Tenant (1) ──→ (N) TenantUser
+Tenant (1) ──→ (N) Staff
+Tenant (1) ──→ (N) Event
+Tenant (1) ──→ (N) Order
+
+User (1) ──→ (N) TenantUser
+User (1) ──→ (1) Staff (per tenant)
+
+Event (1) ──→ (N) EventSession
+Event (1) ──→ (N) TicketType
+Event (1) ──→ (N) DiscountCode
+Event (1) ──→ (N) Order
+
+TicketType (1) ──→ (N) Ticket
+Order (1) ──→ (N) Ticket
+Order (1) ──→ (N) Payment
+
+Staff (1) ──→ (N) ActivityLog
+User (1) ──→ (N) ActivityLog
+
+DETAILED RELATIONSHIPS:
+-----------------------
+
+1. TENANT → TENANT_USERS (One-to-Many)
+   - One tenant can have many tenant users
+   - TenantUser.tenant_id → Tenant.id
+   - Cascade delete: When tenant is deleted, all tenant users are deleted
+
+2. USER → TENANT_USERS (One-to-Many)
+   - One user can belong to multiple tenants (with different roles)
+   - TenantUser.user_id → User.id
+   - Cascade delete: When user is deleted, all tenant user records are deleted
+
+3. TENANT → STAFF (One-to-Many)
+   - One tenant can have many staff members
+   - Staff.tenant_id → Tenant.id
+   - Cascade delete: When tenant is deleted, all staff are deleted
+
+4. USER → STAFF (One-to-One per Tenant)
+   - One user can be staff for one tenant (unique constraint on user_id)
+   - Staff.user_id → User.id
+   - Cascade delete: When user is deleted, staff record is deleted
+
+5. TENANT → EVENTS (One-to-Many)
+   - One tenant can have many events
+   - Event.tenant_id → Tenant.id
+   - Events are isolated per tenant
+
+6. EVENT → EVENT_SESSIONS (One-to-Many)
+   - One event can have many sessions
+   - EventSession.event_id → Event.id
+   - Cascade delete: When event is deleted, all sessions are deleted
+
+7. EVENT → TICKET_TYPES (One-to-Many)
+   - One event can have many ticket types
+   - TicketType.event_id → Event.id
+   - Cascade delete: When event is deleted, all ticket types are deleted
+
+8. EVENT → DISCOUNT_CODES (One-to-Many)
+   - One event can have many discount codes
+   - DiscountCode.event_id → Event.id
+   - Cascade delete: When event is deleted, all discount codes are deleted
+
+9. EVENT → ORDERS (One-to-Many)
+   - One event can have many orders
+   - Order.event_id → Event.id
+   - Orders reference both event and tenant
+
+10. TENANT → ORDERS (One-to-Many)
+    - One tenant can have many orders
+    - Order.tenant_id → Tenant.id
+    - Orders are isolated per tenant
+
+11. ORDER → TICKETS (One-to-Many)
+    - One order can have many tickets
+    - Ticket.order_id → Order.id
+    - Cascade delete: When order is deleted, all tickets are deleted
+
+12. TICKET_TYPE → TICKETS (One-to-Many)
+    - One ticket type can have many tickets
+    - Ticket.ticket_type_id → TicketType.id
+    - Tickets reference both order and ticket type
+
+13. ORDER → PAYMENTS (One-to-Many)
+    - One order can have many payments
+    - Payment.order_id → Order.id
+    - Multiple payments possible (e.g., partial payments, refunds)
+
+14. STAFF → ACTIVITY_LOGS (One-to-Many)
+    - One staff member can have many activity logs
+    - ActivityLog.staff_id → Staff.id
+    - Activity logs track staff actions
+
+15. USER → ACTIVITY_LOGS (One-to-Many)
+    - One user can have many activity logs
+    - ActivityLog.user_id → User.id
+    - Activity logs track user actions
+
+================================================================================
+USER TYPE INTERACTIONS
+================================================================================
+
+PLATFORM ADMIN
+--------------
+Access Level: System-wide (all tenants)
+
+Can Access:
+- All Users (CRUD)
+- All Tenants (CRUD + Status Management)
+- All Tenant Users (CRUD + Status Management)
+- All Webhook Events (CRUD + Status Management)
+- All Payments (CRUD + Status Management)
+- All Activity Logs (Read, Create, Delete)
+
+Cannot Access:
+- Tenant-specific resources (Events, Tickets, Orders) directly
+- Staff management (must go through TenantAdmin)
+
+Data Isolation:
+- Can see data from all tenants
+- No tenant filtering applied
+
+TENANT ADMIN
+-----------
+Access Level: Tenant-scoped (own tenant only)
+
+Can Access:
+- Own Tenant's Events (Full CRUD)
+- Own Tenant's Event Sessions (Full CRUD)
+- Own Tenant's Ticket Types (Full CRUD)
+- Own Tenant's Discount Codes (Full CRUD)
+- Own Tenant's Orders (Full CRUD)
+- Own Tenant's Tickets (Full CRUD + Check-in)
+- Own Tenant's Staff (Invite, Manage, Remove)
+- Own Tenant's Branding (Read, Update)
+- Event Statistics (Own tenant's events only)
+
+Cannot Access:
+- Other tenants' data
+- Platform-level resources (Users, Tenants)
+- Other tenants' events, orders, tickets
+
+Data Isolation:
+- All queries automatically filtered by tenant_id from JWT
+- Cannot access resources from other tenants
+- Tenant_id is extracted from JWT token, not from request body
+
+STAFF
+-----
+Access Level: Tenant-scoped (own tenant only, read-only for most resources)
+
+Can Access:
+- Own Profile (Read, Update)
+- Own Email (Update)
+- Ticket Check-in (Create)
+- Assigned Tickets (Read)
+- Ticket Search (Read)
+- Events (Read-only, own tenant)
+- Event Ticket Types (Read-only)
+- Event Capacity (Read-only)
+- Orders (Read-only, search by email/code)
+- Attendance Records (Read)
+- Activity Logs (Create, Read, Delete own logs)
+
+Cannot Access:
+- Event Creation/Modification
+- Ticket Type Creation/Modification
+- Order Creation/Modification
+- Staff Management
+- Tenant Branding
+- Other tenants' data
+
+Data Isolation:
+- All queries automatically filtered by tenant_id from JWT
+- Can only check in tickets from own tenant
+- Can only view events/orders from own tenant
+
+================================================================================
+AUTHENTICATION & AUTHORIZATION FLOW
+================================================================================
+
+1. USER LOGIN
+   - User provides email and password
+   - System validates credentials
+   - System determines user role:
+     a. If isPlatformAdmin = true → role = 'platform_admin'
+     b. Else, check TenantUserEntity for active tenant roles
+     c. Priority: TenantAdmin > staff
+     d. Use first active tenant role found
+   - JWT token generated with:
+     * sub: user.id
+     * email: user.email
+     * isPlatformAdmin: boolean
+     * role: 'platform_admin' | 'TenantAdmin' | 'staff'
+     * tenantId: (if not platform admin)
+     * tenantRole: (if not platform admin)
+
+2. REQUEST AUTHORIZATION
+   - JWT token validated
+   - User role extracted from token
+   - Role-based access control (RBAC) applied:
+     * Platform Admin: Can access all admin endpoints
+     * TenantAdmin: Can access tenant-admin endpoints
+     * Staff: Can access staff endpoints
+   - Tenant isolation enforced:
+     * TenantAdmin: tenantId from JWT used for all queries
+     * Staff: tenantId from JWT used for all queries
+     * Platform Admin: No tenant filtering
+
+3. DATA ACCESS CONTROL
+   - Platform Admin: No filtering (sees all data)
+   - TenantAdmin: All queries include WHERE tenant_id = JWT.tenantId
+   - Staff: All queries include WHERE tenant_id = JWT.tenantId
+   - Cross-tenant access prevented at service layer
+
+================================================================================
+DATA FLOW DIAGRAMS
+================================================================================
+
+EVENT CREATION FLOW (TenantAdmin):
+-----------------------------------
+1. TenantAdmin logs in → Gets JWT with tenantId
+2. POST /tenant-admin/events
+   - tenantId extracted from JWT (not from request body)
+   - Event created with tenant_id = JWT.tenantId
+3. POST /tenant-admin/ticket-types
+   - Event ownership verified (event.tenant_id = JWT.tenantId)
+   - TicketType created for verified event
+4. POST /tenant-admin/discount-codes
+   - Event ownership verified
+   - DiscountCode created for verified event
+
+ORDER & TICKET FLOW (TenantAdmin):
+----------------------------------
+1. POST /tenant-admin/orders
+   - Event ownership verified
+   - Order created with tenant_id = JWT.tenantId
+2. POST /tenant-admin/tickets
+   - Order ownership verified (order.tenant_id = JWT.tenantId)
+   - Ticket created for verified order
+
+TICKET CHECK-IN FLOW (Staff):
+------------------------------
+1. Staff logs in → Gets JWT with tenantId and role='staff'
+2. POST /staff/checkin
+   - QR payload validated
+   - Ticket found by qr_code_payload
+   - Ticket ownership verified (ticket.order.tenant_id = JWT.tenantId)
+   - Ticket status updated to 'scanned'
+   - Activity log created
+
+STAFF MANAGEMENT FLOW:
+----------------------
+1. TenantAdmin invites staff:
+   - POST /tenant-admin/tenant-users
+   - Creates UserEntity (if doesn't exist)
+   - Creates TenantUserEntity (role='staff', status='active')
+   - Creates StaffEntity (linked to user and tenant)
+2. Staff logs in:
+   - System finds TenantUserEntity with role='staff'
+   - JWT generated with role='staff' and tenantId
+3. Staff accesses profile:
+   - GET /staff/me
+   - If StaffEntity missing but TenantUserEntity exists, auto-creates StaffEntity
+
+================================================================================
+SECURITY CONSIDERATIONS
+================================================================================
+
+1. TENANT ISOLATION
+   - All TenantAdmin and Staff queries include tenant_id filter
+   - Tenant_id comes from JWT, never from request body
+   - Service layer validates resource ownership before operations
+
+2. ROLE-BASED ACCESS
+   - Guards check user role from JWT
+   - Different endpoints require different roles
+   - Platform Admin can access all admin endpoints
+   - TenantAdmin can only access tenant-admin endpoints
+   - Staff can only access staff endpoints
+
+3. PASSWORD SECURITY
+   - Passwords hashed with bcrypt (10 rounds)
+   - Password requirements enforced in DTOs
+   - Passwords never returned in API responses
+
+4. JWT TOKEN SECURITY
+   - Tokens contain user ID, email, role, and tenantId
+   - Tokens signed with secret key
+   - Tokens validated on every request
+   - Expired tokens rejected
+
+5. DATA VALIDATION
+   - All inputs validated using class-validator
+   - DTOs enforce required fields and formats
+   - TypeORM entities enforce database constraints
+
+================================================================================
+INDEXES & PERFORMANCE
+================================================================================
+
+IMPORTANT INDEXES:
+------------------
+1. users.email (Unique Index)
+2. tenants.slug (Unique Index)
+3. tenant_users (tenant_id, user_id) (Composite Index)
+4. staff (tenant_id, user_id) (Unique Composite Index)
+5. staff.tenant_id (Index)
+6. events.tenant_id (Index)
+7. orders.tenant_id (Index)
+8. orders.event_id (Index)
+9. tickets.order_id (Index)
+10. tickets.ticket_type_id (Index)
+11. discount_codes.code (Unique Index)
+
+QUERY OPTIMIZATION:
+------------------
+- All tenant-scoped queries use indexed tenant_id
+- Relations loaded only when needed
+- Pagination implemented for list endpoints
+- Search queries use indexed fields
+
+================================================================================
+CASCADE DELETE RULES
+================================================================================
+
+When a parent entity is deleted, child entities are automatically deleted:
+
+1. Tenant deleted → All TenantUsers, Staff, Events deleted
+2. Event deleted → All EventSessions, TicketTypes, DiscountCodes deleted
+3. Order deleted → All Tickets deleted
+4. User deleted → All TenantUsers, Staff, ActivityLogs deleted
+5. Staff deleted → All ActivityLogs (where staff_id) deleted
+
+IMPORTANT: Orders are NOT deleted when Event is deleted (to preserve transaction history)
+
+================================================================================
+ENUMS & CONSTRAINTS
+================================================================================
+
+STATUS ENUMS:
+------------
+- Tenant.status: 'active', 'suspended', 'pending'
+- TenantUser.status: 'active', 'inactive', 'suspended'
+- TenantUser.role: 'TenantAdmin', 'staff'
+- Event.status: 'draft', 'scheduled', 'active', 'cancelled', 'completed'
+- TicketType.status: 'draft', 'active', 'paused', 'sold_out', 'closed'
+- DiscountCode.status: 'active', 'expired', 'disabled'
+- Order.status: 'pending', 'completed', 'failed', 'cancelled', 'refunded'
+- Ticket.status: 'valid', 'scanned', 'used', 'cancelled', 'refunded'
+- Payment.status: 'pending', 'completed', 'failed', 'refunded'
+- WebhookEvent.status: 'pending', 'completed', 'failed'
+
+UNIQUE CONSTRAINTS:
+------------------
+- users.email (Unique)
+- tenants.slug (Unique)
+- staff (tenant_id, user_id) (Unique)
+- discount_codes.code (Unique)
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+

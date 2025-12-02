@@ -10,7 +10,6 @@ import {
   IsPhoneNumber,
 } from 'class-validator';
 
-
 export class CreateStaffDto {
   @IsString()
   @IsNotEmpty()
@@ -26,10 +25,13 @@ export class CreateStaffDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(50)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-    message:
-      'Password must contain uppercase, lowercase, number, and special character',
-  })
+  @Matches(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    {
+      message:
+        'Password must contain uppercase, lowercase, number, and special character',
+    },
+  )
   password: string;
 
   @IsEnum(['CHECKER', 'SUPERVISOR', 'SUPPORT'])
@@ -44,7 +46,6 @@ export class CreateStaffDto {
   @IsEnum(['MALE', 'FEMALE', 'OTHER'])
   gender?: string;
 }
-
 
 export class UpdateStaffDto {
   @IsOptional()
@@ -71,7 +72,6 @@ export class UpdateStaffDto {
   @MaxLength(50)
   password?: string;
 }
-
 
 export class CheckinDto {
   @IsString()

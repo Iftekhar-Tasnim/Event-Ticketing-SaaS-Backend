@@ -1,0 +1,654 @@
+{
+	"info": {
+		"_postman_id": "platform-admin-collection",
+		"name": "Platform Admin API Collection",
+		"description": "Complete API collection for Platform Admin user. All endpoints require JWT authentication with 'platform_admin' role.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('access_token', jsonData.access_token);",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@platform.com\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users Management",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password@123\",\n  \"fullName\": \"John Doe\",\n  \"isPlatformAdmin\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users?page=1&limit=20&search=john",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"},
+								{"key": "search", "value": "john"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{"key": "id", "value": "user-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"John Updated\",\n  \"isPlatformAdmin\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{"key": "id", "value": "user-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{"key": "id", "value": "user-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Tenants Management",
+			"item": [
+				{
+					"name": "Create Tenant",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Event Company Inc\",\n  \"slug\": \"event-company\",\n  \"brandingSettings\": {\n    \"logo\": \"https://example.com/logo.png\",\n    \"primaryColor\": \"#FF5733\"\n  },\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/tenants",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenants"]
+						}
+					}
+				},
+				{
+					"name": "Get All Tenants",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/tenants?page=1&limit=20&search=event",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenants"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"},
+								{"key": "search", "value": "event"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Tenant By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/tenants/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenants", ":id"],
+							"variable": [
+								{"key": "id", "value": "tenant-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Tenant",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Company Name\",\n  \"slug\": \"updated-slug\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/tenants/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenants", ":id"],
+							"variable": [
+								{"key": "id", "value": "tenant-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Tenant Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"suspended\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/tenants/:id/status",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenants", ":id", "status"],
+							"variable": [
+								{"key": "id", "value": "tenant-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Tenant",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/tenants/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenants", ":id"],
+							"variable": [
+								{"key": "id", "value": "tenant-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Tenant Users Management",
+			"item": [
+				{
+					"name": "Create Tenant User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"tenant-uuid-here\",\n  \"userId\": \"user-uuid-here\",\n  \"role\": \"TenantAdmin\",\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/tenant-users",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenant-users"]
+						}
+					}
+				},
+				{
+					"name": "Get All Tenant Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/tenant-users?page=1&limit=20&tenantId=tenant-uuid&role=TenantAdmin",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenant-users"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"},
+								{"key": "tenantId", "value": "tenant-uuid"},
+								{"key": "role", "value": "TenantAdmin"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Tenant User By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/tenant-users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenant-users", ":id"],
+							"variable": [
+								{"key": "id", "value": "tenant-user-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Tenant User",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"role\": \"staff\",\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/tenant-users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenant-users", ":id"],
+							"variable": [
+								{"key": "id", "value": "tenant-user-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Tenant User Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"suspended\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/tenant-users/:id/status",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenant-users", ":id", "status"],
+							"variable": [
+								{"key": "id", "value": "tenant-user-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Tenant User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/tenant-users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "tenant-users", ":id"],
+							"variable": [
+								{"key": "id", "value": "tenant-user-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Webhook Events",
+			"item": [
+				{
+					"name": "Create Webhook Event",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"eventType\": \"order.completed\",\n  \"payload\": {\"orderId\": \"123\"},\n  \"status\": \"pending\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/webhook-events",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "webhook-events"]
+						}
+					}
+				},
+				{
+					"name": "Get All Webhook Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/webhook-events?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "webhook-events"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Webhook Event By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/webhook-events/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "webhook-events", ":id"],
+							"variable": [
+								{"key": "id", "value": "webhook-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Webhook Event",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/webhook-events/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "webhook-events", ":id"],
+							"variable": [
+								{"key": "id", "value": "webhook-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Webhook Event Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"failed\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/webhook-events/:id/status",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "webhook-events", ":id", "status"],
+							"variable": [
+								{"key": "id", "value": "webhook-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Webhook Event",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/webhook-events/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "webhook-events", ":id"],
+							"variable": [
+								{"key": "id", "value": "webhook-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Create Payment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"order-uuid-here\",\n  \"amount\": 5000,\n  \"currency\": \"BDT\",\n  \"paymentMethod\": \"card\",\n  \"status\": \"pending\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/payments",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "payments"]
+						}
+					}
+				},
+				{
+					"name": "Get All Payments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/payments?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "payments"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Payment By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/payments/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "payments", ":id"],
+							"variable": [
+								{"key": "id", "value": "payment-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Payment",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/payments/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "payments", ":id"],
+							"variable": [
+								{"key": "id", "value": "payment-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Payment Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"failed\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/payments/:id/status",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "payments", ":id", "status"],
+							"variable": [
+								{"key": "id", "value": "payment-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Payment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/payments/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "payments", ":id"],
+							"variable": [
+								{"key": "id", "value": "payment-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Activity Logs",
+			"item": [
+				{
+					"name": "Create Activity Log",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"user-uuid-here\",\n  \"action\": \"user.created\",\n  \"description\": \"User account created\",\n  \"metadata\": {\"ip\": \"192.168.1.1\"}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/activity-logs",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "activity-logs"]
+						}
+					}
+				},
+				{
+					"name": "Get All Activity Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/activity-logs?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "activity-logs"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Activity Log By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/activity-logs/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "activity-logs", ":id"],
+							"variable": [
+								{"key": "id", "value": "log-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Activity Log",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/activity-logs/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "activity-logs", ":id"],
+							"variable": [
+								{"key": "id", "value": "log-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
+

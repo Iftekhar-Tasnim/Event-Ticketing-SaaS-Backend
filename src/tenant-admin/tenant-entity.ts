@@ -14,8 +14,8 @@ export class Event {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('varchar', { length: 100, unique: true })
-  tenantId: string;
+  @Column('uuid')
+  tenant_id: string;
 
   @Column('varchar', { length: 150 })
   name: string;

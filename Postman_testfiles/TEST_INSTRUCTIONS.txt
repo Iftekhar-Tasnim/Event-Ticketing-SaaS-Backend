@@ -1,0 +1,284 @@
+================================================================================
+                    POSTMAN API TESTING INSTRUCTIONS
+                    Event Ticketing System - Backend API
+================================================================================
+
+OVERVIEW
+--------
+This folder contains Postman collections for testing the Event Ticketing System
+backend API. There are three separate collections, one for each user type:
+1. Platform Admin
+2. TenantAdmin
+3. Staff
+
+Each collection includes all endpoints available to that user type with example
+request bodies and proper authentication setup.
+
+================================================================================
+SETUP INSTRUCTIONS
+================================================================================
+
+1. INSTALL POSTMAN
+   - Download and install Postman from https://www.postman.com/downloads/
+   - Create a free account if you don't have one
+
+2. IMPORT COLLECTIONS
+   - Open Postman
+   - Click "Import" button (top left)
+   - Select all three JSON files:
+     * Platform_Admin_Collection.json
+     * TenantAdmin_Collection.json
+     * Staff_Collection.json
+   - Click "Import"
+
+3. CONFIGURE BASE URL
+   - Each collection has a variable called "base_url"
+   - Default value is: http://localhost:3000
+   - To change it:
+     * Click on the collection name
+     * Go to "Variables" tab
+     * Update "base_url" value if your server runs on a different port/host
+
+4. SETUP ENVIRONMENT (OPTIONAL)
+   - Create a new environment in Postman
+   - Add variable: "base_url" = "http://localhost:3000"
+   - Add variable: "access_token" = "" (will be auto-filled after login)
+   - Select this environment before testing
+
+================================================================================
+AUTHENTICATION FLOW
+================================================================================
+
+All endpoints (except login) require JWT Bearer token authentication.
+
+AUTHENTICATION STEPS:
+1. Start with the "Login" request in the Authentication folder
+2. Update the email and password in the request body with valid credentials
+3. Send the login request
+4. The access_token will be automatically saved to collection variables
+5. All subsequent requests will use this token automatically
+
+IMPORTANT NOTES:
+- Tokens expire after a certain time (check your JWT configuration)
+- If you get 401 Unauthorized, login again to get a new token
+- Each user type has different credentials:
+  * Platform Admin: Must have isPlatformAdmin = true
+  * TenantAdmin: Must have TenantUserEntity with role = 'TenantAdmin'
+  * Staff: Must have TenantUserEntity with role = 'staff'
+
+================================================================================
+TESTING WORKFLOW BY USER TYPE
+================================================================================
+
+PLATFORM ADMIN
+--------------
+1. Login with Platform Admin credentials
+2. Create a Tenant (if needed)
+3. Create Users
+4. Create Tenant Users (assign TenantAdmin or staff roles)
+5. Manage all system resources (Users, Tenants, Payments, Webhooks, etc.)
+
+TENANT ADMIN
+------------
+1. Login with TenantAdmin credentials
+2. Create Events
+3. Create Ticket Types for events
+4. Create Discount Codes
+5. Create Orders and Tickets
+6. Manage Staff (invite, update, remove)
+7. Update Tenant Branding
+8. View Event Statistics
+
+STAFF
+-----
+1. Login with Staff credentials
+2. View own profile (GET /staff/me)
+3. Update profile if needed
+4. Check in tickets using QR code payload
+5. View assigned tickets
+6. Search for tickets
+7. View events (read-only)
+8. Search orders by email or code
+9. View attendance records
+10. Create activity logs
+
+================================================================================
+COMMON TESTING SCENARIOS
+================================================================================
+
+SCENARIO 1: Complete Event Creation Flow (TenantAdmin)
+------------------------------------------------------
+1. Login as TenantAdmin
+2. Create Event → Save event_id from response
+3. Create Event Session → Use event_id
+4. Create Ticket Type → Use event_id
+5. Create Discount Code → Use event_id
+6. Create Order → Use event_id
+7. Create Ticket → Use order_id and ticket_type_id
+8. Get Event Stats → Use event_id
+
+SCENARIO 2: Ticket Check-In Flow (Staff)
+------------------------------------------
+1. Login as Staff
+2. Get Assigned Tickets → View available tickets
+3. Check In Ticket → Use qrPayload from a ticket
+4. Get Attendance Records → View checked-in tickets
+5. Create Activity Log → Log the check-in action
+
+SCENARIO 3: Staff Management Flow (TenantAdmin)
+------------------------------------------------
+1. Login as TenantAdmin
+2. Invite Staff → Create new staff member
+3. Get All Staff → View all staff members
+4. Update Staff Status → Activate/deactivate staff
+5. Remove Staff → Delete staff member
+
+SCENARIO 4: Order Lookup Flow (Staff)
+--------------------------------------
+1. Login as Staff
+2. Search Orders By Email → Find orders for a buyer
+3. Get Order By ID → View order details with tickets
+4. Search Tickets → Find specific tickets
+
+================================================================================
+VARIABLES AND DYNAMIC VALUES
+================================================================================
+
+The collections use variables to store dynamic values:
+
+PLATFORM ADMIN:
+- access_token: Auto-filled after login
+- base_url: Server URL (default: http://localhost:3000)
+
+TENANT ADMIN:
+- access_token: Auto-filled after login
+- base_url: Server URL
+- event_id: Auto-filled after creating an event
+- ticket_type_id: Auto-filled after creating a ticket type
+- order_id: Auto-filled after creating an order
+
+STAFF:
+- access_token: Auto-filled after login
+- base_url: Server URL
+
+To use variables in requests:
+- Use {{variable_name}} syntax
+- Variables are automatically replaced when sending requests
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ISSUE: 401 Unauthorized
+SOLUTION:
+- Check if you're logged in (token might be expired)
+- Login again to get a new token
+- Verify the token is being sent in Authorization header
+
+ISSUE: 403 Forbidden
+SOLUTION:
+- Check if your user has the correct role
+- Verify you're using the right collection for your user type
+- Check if the endpoint requires specific permissions
+
+ISSUE: 404 Not Found
+SOLUTION:
+- Verify the endpoint URL is correct
+- Check if the resource ID exists
+- Ensure you're using the correct base_url
+
+ISSUE: 400 Bad Request
+SOLUTION:
+- Check the request body format (must be valid JSON)
+- Verify all required fields are present
+- Check field validation rules (email format, password strength, etc.)
+
+ISSUE: 500 Internal Server Error
+SOLUTION:
+- Check server logs for detailed error messages
+- Verify database connection
+- Check if all required entities exist (e.g., tenant_id for TenantAdmin)
+
+ISSUE: Variables not updating
+SOLUTION:
+- Check if the test script ran successfully (look for green checkmark)
+- Manually update variables in collection settings
+- Clear and re-import the collection
+
+================================================================================
+VALIDATION RULES
+================================================================================
+
+PASSWORD REQUIREMENTS:
+- Minimum 8 characters
+- Must contain uppercase letter
+- Must contain lowercase letter
+- Must contain number
+- Must contain special character (@$!%*?&)
+
+EMAIL REQUIREMENTS:
+- Valid email format
+- Unique in the system
+
+UUID FORMAT:
+- All IDs are UUIDs (e.g., "123e4567-e89b-12d3-a456-426614174000")
+- Use valid UUIDs from previous responses
+
+DATE FORMAT:
+- ISO 8601 format (e.g., "2024-07-15T18:00:00Z")
+- Use UTC timezone
+
+================================================================================
+BEST PRACTICES
+================================================================================
+
+1. TEST IN ORDER:
+   - Always test endpoints in logical order
+   - Create resources before reading/updating/deleting them
+
+2. SAVE RESPONSES:
+   - Copy important IDs from responses
+   - Use them in subsequent requests
+
+3. USE VARIABLES:
+   - Let Postman auto-save IDs to variables
+   - Update variable values manually if needed
+
+4. CHECK RESPONSES:
+   - Verify status codes (200, 201, etc.)
+   - Check response body structure
+   - Validate data correctness
+
+5. CLEAN UP:
+   - Delete test data after testing
+   - Use test-specific email addresses
+   - Don't use production data
+
+6. SECURITY:
+   - Don't commit tokens to version control
+   - Use environment variables for sensitive data
+   - Rotate test credentials regularly
+
+================================================================================
+ADDITIONAL RESOURCES
+================================================================================
+
+- API Documentation: Check backend_architecture_and_flow.md
+- Database Schema: Check PROJECT_DIAGRAM_AND_RELATIONS.txt
+- Implementation Plan: Check event_ticketing_implementation_plan.md
+
+================================================================================
+SUPPORT
+================================================================================
+
+If you encounter issues:
+1. Check the troubleshooting section above
+2. Review server logs
+3. Verify database state
+4. Check API documentation
+5. Contact the development team
+
+================================================================================
+END OF INSTRUCTIONS
+================================================================================
+

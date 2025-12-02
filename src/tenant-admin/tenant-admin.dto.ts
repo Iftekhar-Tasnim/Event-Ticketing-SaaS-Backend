@@ -8,6 +8,10 @@ import {
   Min,
   IsPositive,
   IsEnum,
+  IsEmail,
+  MinLength,
+  IsIn,
+  IsObject,
 } from 'class-validator';
 
 export enum EventStatus {
@@ -19,9 +23,9 @@ export enum EventStatus {
 }
 
 export class createEventsDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  tenantId: string;
+  tenantId?: string; // Will be set from JWT token, not from DTO
 
   @IsNotEmpty({ message: 'Please enter a valid name' })
   @MaxLength(150, {
@@ -308,4 +312,45 @@ export class TicketsDto {
     message: 'Seat label is too long. Maximum length is 50 characters',
   })
   seat_label?: string;
+}
+
+// Tenant User Management DTOs (for TenantAdmin)
+export class InviteStaffDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  fullName: string;
+
+  @IsOptional()
+  @IsIn(['active', 'inactive'])
+  status?: string;
+}
+
+export class UpdateStaffDto {
+  @IsOptional()
+  @IsIn(['active', 'inactive', 'suspended'])
+  status?: string;
+}
+
+export class UpdateStaffStatusDto {
+  @IsIn(['active', 'inactive', 'suspended'], {
+    message: 'status must be one of: active, inactive, suspended',
+  })
+  status: string;
+}
+
+// Tenant Branding DTO
+export class UpdateTenantBrandingDto {
+  @IsOptional()
+  @IsObject()
+  brandingSettings?: Record<string, any>;
 }

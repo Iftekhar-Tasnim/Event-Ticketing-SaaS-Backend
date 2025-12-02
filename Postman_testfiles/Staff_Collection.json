@@ -1,0 +1,388 @@
+{
+	"info": {
+		"_postman_id": "staff-collection",
+		"name": "Staff API Collection",
+		"description": "Complete API collection for Staff user. All endpoints require JWT authentication with 'staff' role. TenantId is automatically extracted from JWT token.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('access_token', jsonData.access_token);",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"staff@example.com\",\n  \"password\": \"Password@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Staff Profile",
+			"item": [
+				{
+					"name": "Get Current Staff Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/me",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "me"]
+						}
+					}
+				},
+				{
+					"name": "Update Staff Profile",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Updated Staff Name\",\n  \"position\": \"SUPERVISOR\",\n  \"phoneNumber\": \"+1234567890\",\n  \"gender\": \"MALE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/me",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "me"]
+						}
+					}
+				},
+				{
+					"name": "Update Staff Email",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/me/email?email=newemail@example.com",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "me", "email"],
+							"query": [
+								{"key": "email", "value": "newemail@example.com"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Register Staff (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"newstaff@example.com\",\n  \"password\": \"Password@123\",\n  \"fullName\": \"New Staff Member\",\n  \"position\": \"CHECKER\",\n  \"phoneNumber\": \"+1234567890\",\n  \"gender\": \"FEMALE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/register",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "register"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Ticket Check-In",
+			"item": [
+				{
+					"name": "Check In Ticket",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"qrPayload\": \"ticket-qr-payload-123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/checkin",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "checkin"]
+						}
+					}
+				},
+				{
+					"name": "Get Assigned Tickets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/tickets?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "tickets"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search Tickets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/search/tickets?q=john",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "search", "tickets"],
+							"query": [
+								{"key": "q", "value": "john"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Events (Read-Only)",
+			"item": [
+				{
+					"name": "Get All Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/events?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "events"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Event By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/events/:id",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "events", ":id"],
+							"variable": [
+								{"key": "id", "value": "event-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Event Ticket Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/events/:id/ticket-types",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "events", ":id", "ticket-types"],
+							"variable": [
+								{"key": "id", "value": "event-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Event Capacity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/events/:id/capacity",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "events", ":id", "capacity"],
+							"variable": [
+								{"key": "id", "value": "event-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Orders (Read-Only)",
+			"item": [
+				{
+					"name": "Search Orders By Email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/orders/search?email=buyer@example.com",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "orders", "search"],
+							"query": [
+								{"key": "email", "value": "buyer@example.com"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search Order By Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/orders/search?code=ORDER-12345",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "orders", "search"],
+							"query": [
+								{"key": "code", "value": "ORDER-12345"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Order By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/orders/:id",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "orders", ":id"],
+							"variable": [
+								{"key": "id", "value": "order-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Activity Logs",
+			"item": [
+				{
+					"name": "Get Staff Activity Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/:id/logs?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["staff", ":id", "logs"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "limit", "value": "20"}
+							],
+							"variable": [
+								{"key": "id", "value": "staff-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Activity Log",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"ticket.checked_in\",\n  \"description\": \"Checked in ticket for event\",\n  \"metadata\": {\n    \"ticketId\": \"ticket-uuid\",\n    \"eventId\": \"event-uuid\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/:id/logs",
+							"host": ["{{base_url}}"],
+							"path": ["staff", ":id", "logs"],
+							"variable": [
+								{"key": "id", "value": "staff-uuid-here"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Activity Log",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/:id/logs/:logId",
+							"host": ["{{base_url}}"],
+							"path": ["staff", ":id", "logs", ":logId"],
+							"variable": [
+								{"key": "id", "value": "staff-uuid-here"},
+								{"key": "logId", "value": "log-uuid-here"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Reports",
+			"item": [
+				{
+					"name": "Get Attendance Records",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/attendance-records?eventId=event-uuid-here",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "attendance-records"],
+							"query": [
+								{"key": "eventId", "value": "event-uuid-here", "disabled": true}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
+

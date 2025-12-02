@@ -352,7 +352,7 @@ export class StaffService {
 
     // Find ticket by qr_code_payload or by id
     const ticket = await this.ticketRepo.findOne({
-      where: [{ qr_code_payload: dto.qrPayload }, { id: dto.qrPayload as any }],
+      where: [{ qr_code_payload: dto.qrPayload }, { id: dto.qrPayload }],
       relations: ['order', 'order.event'],
     });
 
@@ -430,11 +430,13 @@ export class StaffService {
     // Mailer functionality will be added later
 
     // Hide QR payload in response
-    const { qr_code_payload, ...safeTicket } = savedTicket as any;
+    type SafeTicket = Omit<Ticket, 'qr_code_payload'>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { qr_code_payload, ...safeTicket } = savedTicket;
 
     return {
       message: 'Ticket checked in successfully',
-      ticket: safeTicket,
+      ticket: safeTicket as SafeTicket,
     };
   }
 
@@ -455,9 +457,11 @@ export class StaffService {
       order: { created_at: 'DESC' },
     });
 
-    const safeTickets = tickets.map((t) => {
-      const { qr_code_payload, ...rest } = t as any;
-      return rest;
+    type SafeTicket = Omit<Ticket, 'qr_code_payload'>;
+    const safeTickets: SafeTicket[] = tickets.map((t) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { qr_code_payload, ...rest } = t;
+      return rest as SafeTicket;
     });
 
     return {
@@ -568,7 +572,7 @@ export class StaffService {
       }
 
       return await qb.orderBy('ticket.checked_in_at', 'DESC').getMany();
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Failed to load attendance records',
       );
@@ -600,9 +604,11 @@ export class StaffService {
       .orderBy('ticket.created_at', 'DESC')
       .getMany();
 
-    return tickets.map((t) => {
-      const { qr_code_payload, ...rest } = t as any;
-      return rest;
+    type SafeTicket = Omit<Ticket, 'qr_code_payload'>;
+    return tickets.map((t): SafeTicket => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { qr_code_payload, ...rest } = t;
+      return rest as SafeTicket;
     });
   }
 
@@ -622,7 +628,7 @@ export class StaffService {
     limit: number = 20,
   ): Promise<{ data: Event[]; total: number; page: number }> {
     const [events, total] = await this.eventRepo.findAndCount({
-      where: { tenantId },
+      where: { tenant_id: tenantId },
       relations: ['ticketTypes'],
       skip: (page - 1) * limit,
       take: limit,
@@ -638,7 +644,7 @@ export class StaffService {
    */
   async getEventById(tenantId: string, eventId: string): Promise<Event> {
     const event = await this.eventRepo.findOne({
-      where: { id: eventId, tenantId },
+      where: { id: eventId, tenant_id: tenantId },
       relations: ['ticketTypes', 'sessions'],
     });
 
@@ -661,7 +667,7 @@ export class StaffService {
   ): Promise<TicketType[]> {
     // Verify event belongs to tenant
     const event = await this.eventRepo.findOne({
-      where: { id: eventId, tenantId },
+      where: { id: eventId, tenant_id: tenantId },
     });
 
     if (!event) {
@@ -702,7 +708,7 @@ export class StaffService {
   }> {
     // Verify event belongs to tenant
     const event = await this.eventRepo.findOne({
-      where: { id: eventId, tenantId },
+      where: { id: eventId, tenant_id: tenantId },
     });
 
     if (!event) {
