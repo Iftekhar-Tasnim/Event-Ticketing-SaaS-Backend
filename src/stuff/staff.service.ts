@@ -7,14 +7,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { StaffEntity } from './staff.entity';
 import { ActivityLogEntity } from '../admin/activity-log.entity';
-import { CreateStaffDto, UpdateStaffDto, CheckinDto  } from './staff.dto';
+import { CreateStaffDto, UpdateStaffDto, CheckinDto } from './staff.dto';
 
 import {
   Event,
@@ -69,16 +68,13 @@ export class StaffService {
     isActive: boolean,
   ): Promise<void> {
     const status = isActive ? 'active' : 'inactive';
-    await this.tenantUserRepo.update(
-      { tenantId, userId },
-      { status },
-    );
+    await this.tenantUserRepo.update({ tenantId, userId }, { status });
   }
 
   /**
    * Create a new staff member for a tenant.
    * Called from: POST /staff/register
-   * 
+   *
    * This method:
    * 1. Creates a UserEntity with email and password
    * 2. Creates a StaffEntity linked to that user
@@ -169,7 +165,7 @@ export class StaffService {
   /**
    * Get currently logged-in staff profile by staffId.
    * Called from: GET /staff/me
-   * 
+   *
    * Note: staffId from JWT is actually the userId (sub field in JWT payload)
    */
   async getCurrentStaff(staffId: string): Promise<StaffEntity> {
@@ -296,9 +292,7 @@ export class StaffService {
       staff.user.email = newEmail.toLowerCase().trim();
       await this.userRepo.save(staff.user);
     } else {
-      throw new NotFoundException(
-        `User record not found for staff ${staffId}`,
-      );
+      throw new NotFoundException(`User record not found for staff ${staffId}`);
     }
 
     return staff;
@@ -307,7 +301,7 @@ export class StaffService {
   /**
    * Soft-delete (deactivate) a staff member.
    * Called from: DELETE /staff/:id
-   * 
+   *
    * This method:
    * 1. Deactivates StaffEntity (sets isActive = false)
    * 2. Updates TenantUserEntity status to 'inactive' (prevents authentication)
@@ -358,10 +352,7 @@ export class StaffService {
 
     // Find ticket by qr_code_payload or by id
     const ticket = await this.ticketRepo.findOne({
-      where: [
-        { qr_code_payload: dto.qrPayload },
-        { id: dto.qrPayload as any },
-      ],
+      where: [{ qr_code_payload: dto.qrPayload }, { id: dto.qrPayload as any }],
       relations: ['order', 'order.event'],
     });
 
@@ -395,9 +386,7 @@ export class StaffService {
         }),
       );
 
-      throw new ForbiddenException(
-        'Ticket does not belong to your tenant',
-      );
+      throw new ForbiddenException('Ticket does not belong to your tenant');
     }
 
     // Already checked in?
@@ -441,7 +430,7 @@ export class StaffService {
     // Mailer functionality will be added later
 
     // Hide QR payload in response
-      const { qr_code_payload, ...safeTicket } = savedTicket as any;
+    const { qr_code_payload, ...safeTicket } = savedTicket as any;
 
     return {
       message: 'Ticket checked in successfully',
@@ -647,10 +636,7 @@ export class StaffService {
    * Get event details by ID (read-only).
    * Called from: GET /staff/events/:id
    */
-  async getEventById(
-    tenantId: string,
-    eventId: string,
-  ): Promise<Event> {
+  async getEventById(tenantId: string, eventId: string): Promise<Event> {
     const event = await this.eventRepo.findOne({
       where: { id: eventId, tenantId },
       relations: ['ticketTypes', 'sessions'],
@@ -771,10 +757,7 @@ export class StaffService {
    * Search orders by buyer email.
    * Called from: GET /staff/orders/search?email=...
    */
-  async searchOrdersByEmail(
-    tenantId: string,
-    email: string,
-  ): Promise<Order[]> {
+  async searchOrdersByEmail(tenantId: string, email: string): Promise<Order[]> {
     if (!email || email.trim().length < 3) {
       throw new BadRequestException('Email must be at least 3 characters long');
     }
@@ -804,9 +787,7 @@ export class StaffService {
     }
 
     const order = await this.orderRepo.findOne({
-      where: [
-        { tenant_id: tenantId, id: code },
-      ],
+      where: [{ tenant_id: tenantId, id: code }],
       relations: ['event', 'tickets', 'tickets.ticketType'],
     });
 
@@ -817,17 +798,10 @@ export class StaffService {
    * Get order details by ID.
    * Called from: GET /staff/orders/:id
    */
-  async getOrderById(
-    tenantId: string,
-    orderId: string,
-  ): Promise<Order> {
+  async getOrderById(tenantId: string, orderId: string): Promise<Order> {
     const order = await this.orderRepo.findOne({
       where: { id: orderId, tenant_id: tenantId },
-      relations: [
-        'event',
-        'tickets',
-        'tickets.ticketType',
-      ],
+      relations: ['event', 'tickets', 'tickets.ticketType'],
     });
 
     if (!order) {

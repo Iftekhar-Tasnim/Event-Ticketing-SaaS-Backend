@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -38,11 +38,21 @@ export class TenantAdminService {
   ) {}
 
   async createEvent(createEventsDto: createEventsDto): Promise<Event> {
-    const event = this.eventRepository.create(createEventsDto);
-    return await this.eventRepository.save(event);
+    try {
+      const event = this.eventRepository.create(createEventsDto);
+      return await this.eventRepository.save(event);
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        throw new ConflictException('Event with same unique field already exists');
+      }
+      throw new InternalServerErrorException(error?.message || 'Failed to create event');
+    }
   }
 
   async getAllEvents(tenantId: string): Promise<Event[]> {
+    if (!tenantId) {
+      throw new BadRequestException('tenantId query parameter is required');
+    }
     return await this.eventRepository.find({
       where: { tenantId },
       relations: ['sessions', 'ticketTypes', 'discountCodes', 'orders'],
@@ -73,16 +83,21 @@ export class TenantAdminService {
   ): Promise<{ success: boolean; message: string }> {
     const result = await this.eventRepository.delete(eventId);
     if (result.affected === 0) {
-      return { success: false, message: 'Event not found' };
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
     }
     return { success: true, message: 'Event deleted successfully' };
   }
 
-  async createEventSession(
-    eventSessionDto: EventSessionsDto,
-  ): Promise<EventSession> {
-    const session = this.eventSessionRepository.create(eventSessionDto);
-    return await this.eventSessionRepository.save(session);
+  async createEventSession(eventSessionDto: EventSessionsDto): Promise<EventSession> {
+    try {
+      const session = this.eventSessionRepository.create(eventSessionDto);
+      return await this.eventSessionRepository.save(session);
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        throw new ConflictException('Event session with same unique field already exists');
+      }
+      throw new InternalServerErrorException(error?.message || 'Failed to create event session');
+    }
   }
 
   async getEventSessions(eventId: string): Promise<EventSession[]> {
@@ -118,14 +133,12 @@ export class TenantAdminService {
   ): Promise<{ success: boolean; message: string }> {
     const result = await this.eventSessionRepository.delete(sessionId);
     if (result.affected === 0) {
-      return { success: false, message: 'Event session not found' };
+      throw new NotFoundException(`Event session with ID ${sessionId} not found`);
     }
     return { success: true, message: 'Event session deleted successfully' };
   }
 
-  async createTicketType(
-    createTicketDto: CreateTicketsDto,
-  ): Promise<TicketType> {
+  async createTicketType(createTicketDto: CreateTicketsDto): Promise<TicketType> {
     const ticketType = this.ticketTypeRepository.create(createTicketDto);
     return await this.ticketTypeRepository.save(ticketType);
   }
@@ -163,14 +176,12 @@ export class TenantAdminService {
   ): Promise<{ success: boolean; message: string }> {
     const result = await this.ticketTypeRepository.delete(ticketTypeId);
     if (result.affected === 0) {
-      return { success: false, message: 'Ticket type not found' };
+      throw new NotFoundException(`Ticket type with ID ${ticketTypeId} not found`);
     }
     return { success: true, message: 'Ticket type deleted successfully' };
   }
 
-  async createDiscountCode(
-    discountCodeDto: DiscountCodesDto,
-  ): Promise<DiscountCode> {
+  async createDiscountCode(discountCodeDto: DiscountCodesDto): Promise<DiscountCode> {
     const discountCode = this.discountCodeRepository.create(discountCodeDto);
     return await this.discountCodeRepository.save(discountCode);
   }
@@ -219,19 +230,25 @@ export class TenantAdminService {
   ): Promise<{ success: boolean; message: string }> {
     const result = await this.discountCodeRepository.delete(discountCodeId);
     if (result.affected === 0) {
-      return { success: false, message: 'Discount code not found' };
+      throw new NotFoundException(`Discount code with ID ${discountCodeId} not found`);
     }
     return { success: true, message: 'Discount code deleted successfully' };
   }
 
   async createOrder(ordersDto: OrdersDto): Promise<Order> {
-    const order = this.orderRepository.create(ordersDto);
-    return await this.orderRepository.save(order);
+    try {
+      const order = this.orderRepository.create(ordersDto);
+      return await this.orderRepository.save(order);
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        throw new ConflictException('Order with same identifier already exists');
+      }
+      throw new InternalServerErrorException(error?.message || 'Failed to create order');
+    }
   }
 
   async getOrders(tenantId: string, eventId?: string): Promise<Order[]> {
-    const query = this.orderRepository
-      .createQueryBuilder('order')
+    const query = this.orderRepository.createQueryBuilder('order')
       .where('order.tenant_id = :tenantId', { tenantId });
 
     if (eventId) {
@@ -268,14 +285,21 @@ export class TenantAdminService {
   ): Promise<{ success: boolean; message: string }> {
     const result = await this.orderRepository.delete(orderId);
     if (result.affected === 0) {
-      return { success: false, message: 'Order not found' };
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
     }
     return { success: true, message: 'Order deleted successfully' };
   }
 
   async createTicket(ticketsDto: TicketsDto): Promise<Ticket> {
-    const ticket = this.ticketRepository.create(ticketsDto);
-    return await this.ticketRepository.save(ticket);
+    try {
+      const ticket = this.ticketRepository.create(ticketsDto);
+      return await this.ticketRepository.save(ticket);
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        throw new ConflictException('Ticket with same identifier already exists');
+      }
+      throw new InternalServerErrorException(error?.message || 'Failed to create ticket');
+    }
   }
 
   async getTickets(orderId?: string): Promise<Ticket[]> {
@@ -322,7 +346,7 @@ export class TenantAdminService {
   ): Promise<{ success: boolean; message: string }> {
     const result = await this.ticketRepository.delete(ticketId);
     if (result.affected === 0) {
-      return { success: false, message: 'Ticket not found' };
+      throw new NotFoundException(`Ticket with ID ${ticketId} not found`);
     }
     return { success: true, message: 'Ticket deleted successfully' };
   }
