@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TenantAdminController } from './tenant-admin.controller';
 import { TenantAdminService } from './tenant-admin.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MailerModule } from '@nestjs-modules/mailer';
 import {
   Event,
   EventSession,
@@ -29,6 +30,7 @@ import { TenantEntity } from '../admin/tenant.entity';
       TenantUserEntity,
       TenantEntity,
     ]),
+    MailerModule,
   ],
   controllers: [TenantAdminController],
   providers: [TenantAdminService],

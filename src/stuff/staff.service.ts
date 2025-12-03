@@ -9,6 +9,7 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 
 import { StaffEntity } from './staff.entity';
@@ -50,6 +51,8 @@ export class StaffService {
 
     @InjectRepository(TenantUserEntity)
     private readonly tenantUserRepo: Repository<TenantUserEntity>,
+
+    private readonly mailerService: MailerService,
   ) {}
 
   /**
@@ -156,8 +159,30 @@ export class StaffService {
       await this.tenantUserRepo.save(existingTenantUser);
     }
 
-    // TODO: Send welcome/invitation email when MailerService is implemented
-    // Mailer functionality will be added later
+    // Send welcome email
+    try {
+      await this.mailerService.sendMail({
+        to: dto.email,
+        subject: 'Welcome to Event Ticketing System - Staff Account Created',
+        text: `Hello ${dto.fullName},\n\nYour staff account has been created successfully.\n\nYou can now login with:\nEmail: ${dto.email}\n\nPlease ensure you keep your password secure.\n\nBest regards,\nEvent Ticketing Team`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Welcome!</h2>
+            <p>Hello ${dto.fullName},</p>
+            <p>Your staff account has been created successfully.</p>
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0;">You can now login with:</p>
+              <p style="margin: 10px 0;"><strong>Email:</strong> ${dto.email}</p>
+            </div>
+            <p><strong>Important:</strong> Please ensure you keep your password secure.</p>
+            <p>Best regards,<br>Event Ticketing Team</p>
+          </div>
+        `,
+      });
+    } catch (error) {
+      // Log error but don't fail the registration
+      console.error('Failed to send welcome email:', error);
+    }
 
     return savedStaff;
   }
@@ -426,8 +451,38 @@ export class StaffService {
       }),
     );
 
-    // TODO: Send check-in confirmation email when MailerService is implemented
-    // Mailer functionality will be added later
+    // Send check-in confirmation email
+    if (ticket.attendee_email) {
+      try {
+        const eventName = ticket.order?.event?.name || 'the event';
+        const checkInTime = new Date(ticket.checked_in_at).toLocaleString();
+
+        await this.mailerService.sendMail({
+          to: ticket.attendee_email,
+          subject: 'Ticket Check-in Confirmation - Event Ticketing System',
+          text: `Hello ${ticket.attendee_name},\n\nYour ticket has been successfully checked in for ${eventName}.\n\nTicket Details:\n- Ticket ID: ${ticket.id}\n- Checked in at: ${checkInTime}\n\nThank you for attending!\n\nBest regards,\nEvent Ticketing Team`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #333;">Check-in Confirmation</h2>
+              <p>Hello ${ticket.attendee_name},</p>
+              <p>Your ticket has been successfully checked in for <strong>${eventName}</strong>.</p>
+              <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p style="margin: 0;"><strong>Ticket Details:</strong></p>
+                <ul style="margin: 10px 0;">
+                  <li><strong>Ticket ID:</strong> ${ticket.id}</li>
+                  <li><strong>Checked in at:</strong> ${checkInTime}</li>
+                </ul>
+              </div>
+              <p>Thank you for attending!</p>
+              <p>Best regards,<br>Event Ticketing Team</p>
+            </div>
+          `,
+        });
+      } catch (error) {
+        // Log error but don't fail the check-in
+        console.error('Failed to send check-in confirmation email:', error);
+      }
+    }
 
     // Hide QR payload in response
     type SafeTicket = Omit<Ticket, 'qr_code_payload'>;

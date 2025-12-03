@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import {
   Event,
@@ -49,6 +50,7 @@ export class TenantAdminService {
     private tenantUserRepository: Repository<TenantUserEntity>,
     @InjectRepository(TenantEntity)
     private tenantRepository: Repository<TenantEntity>,
+    private readonly mailerService: MailerService,
   ) {}
 
   async createEvent(createEventsDto: any): Promise<Event> {
@@ -626,7 +628,37 @@ export class TenantAdminService {
       invitedAt: new Date(),
     });
 
-    return await this.tenantUserRepository.save(tenantUser);
+    const savedTenantUser = await this.tenantUserRepository.save(tenantUser);
+
+    // Send invitation email
+    try {
+      await this.mailerService.sendMail({
+        to: inviteStaffDto.email,
+        subject: 'Staff Invitation - Event Ticketing System',
+        text: `Hello ${inviteStaffDto.fullName},\n\nYou have been invited to join as a staff member for the Event Ticketing System.\n\nYour login credentials:\nEmail: ${inviteStaffDto.email}\nPassword: ${inviteStaffDto.password}\n\nPlease login and change your password for security.\n\nBest regards,\nEvent Ticketing Team`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Staff Invitation</h2>
+            <p>Hello ${inviteStaffDto.fullName},</p>
+            <p>You have been invited to join as a staff member for the Event Ticketing System.</p>
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0;"><strong>Your login credentials:</strong></p>
+              <ul style="margin: 10px 0;">
+                <li>Email: ${inviteStaffDto.email}</li>
+                <li>Password: ${inviteStaffDto.password}</li>
+              </ul>
+            </div>
+            <p><strong>Important:</strong> Please login and change your password for security.</p>
+            <p>Best regards,<br>Event Ticketing Team</p>
+          </div>
+        `,
+      });
+    } catch (error) {
+      // Log error but don't fail the invitation
+      console.error('Failed to send invitation email:', error);
+    }
+
+    return savedTenantUser;
   }
 
   async getAllStaff(

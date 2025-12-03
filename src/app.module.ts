@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantAdminModule } from './tenant-admin/tenant-admin.module';
@@ -8,6 +10,25 @@ import { AttendeeModule } from './attendee/attendee.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT || '465'),
+        ignoreTLS: true,
+        secure: true, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      },
+      defaults: {
+        from: `"Event Ticketing System" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
+      },
+    }),
     TenantAdminModule,
     AdminModule,
     AuthModule,
