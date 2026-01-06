@@ -5,7 +5,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantAdminModule } from './tenant-admin/tenant-admin.module';
-import { StaffModule } from './stuff/staff.module';
+import { StaffModule } from './staff/staff.module';
 import { AttendeeModule } from './attendee/attendee.module';
 
 @Module({
