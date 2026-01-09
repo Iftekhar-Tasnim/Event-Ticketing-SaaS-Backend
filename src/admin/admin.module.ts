@@ -8,6 +8,7 @@ import { TenantUserEntity } from './tenant-user.entity';
 import { WebhookEventEntity } from './webhook-event.entity';
 import { PaymentEntity } from './payment.entity';
 import { ActivityLogEntity } from './activity-log.entity';
+import { ThemeEntity } from './theme.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ActivityLogEntity } from './activity-log.entity';
       WebhookEventEntity,
       PaymentEntity,
       ActivityLogEntity,
+      ThemeEntity,
     ]),
   ],
   controllers: [AdminController],

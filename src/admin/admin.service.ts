@@ -24,6 +24,9 @@ import {
   WebhookEventQueryDto,
   PaymentQueryDto,
   ActivityLogQueryDto,
+  CreateThemeDto,
+  UpdateThemeDto,
+  ThemeQueryDto,
 } from './admin.dto';
 import { UserEntity } from './user.entity';
 import { TenantEntity } from './tenant.entity';
@@ -31,6 +34,7 @@ import { TenantUserEntity } from './tenant-user.entity';
 import { WebhookEventEntity } from './webhook-event.entity';
 import { PaymentEntity } from './payment.entity';
 import { ActivityLogEntity } from './activity-log.entity';
+import { ThemeEntity } from './theme.entity';
 
 @Injectable()
 export class AdminService {
@@ -47,6 +51,8 @@ export class AdminService {
     private paymentRepository: Repository<PaymentEntity>,
     @InjectRepository(ActivityLogEntity)
     private activityLogRepository: Repository<ActivityLogEntity>,
+    @InjectRepository(ThemeEntity)
+    private themeRepository: Repository<ThemeEntity>,
   ) {}
 
   // User operations (Platform Users)
@@ -716,5 +722,49 @@ export class AdminService {
       totalRevenue: totalRevenue,
       systemHealth: healthStatus,
     };
+  }
+
+  // Theme operations
+  async createTheme(createThemeDto: CreateThemeDto): Promise<ThemeEntity> {
+    const theme = this.themeRepository.create(createThemeDto);
+    return this.themeRepository.save(theme);
+  }
+
+  async getAllThemes(query: ThemeQueryDto): Promise<{ data: ThemeEntity[]; total: number }> {
+    const qb = this.themeRepository.createQueryBuilder('theme');
+
+    if (query.status) {
+      qb.andWhere('theme.status = :status', { status: query.status });
+    }
+
+    if (query.search) {
+      qb.andWhere('theme.name ILIKE :search', { search: `%${query.search}%` });
+    }
+
+    qb.orderBy('theme.createdAt', 'DESC');
+
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total };
+  }
+
+  async getThemeById(id: string): Promise<ThemeEntity> {
+    const theme = await this.themeRepository.findOneBy({ id });
+    if (!theme) {
+      throw new NotFoundException(`Theme with ID ${id} not found`);
+    }
+    return theme;
+  }
+
+  async updateTheme(id: string, updateThemeDto: UpdateThemeDto): Promise<ThemeEntity> {
+    const theme = await this.getThemeById(id);
+    Object.assign(theme, updateThemeDto);
+    return this.themeRepository.save(theme);
+  }
+
+  async deleteTheme(id: string): Promise<void> {
+    const result = await this.themeRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Theme with ID ${id} not found`);
+    }
   }
 }

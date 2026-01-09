@@ -34,6 +34,9 @@ import {
   WebhookEventQueryDto,
   PaymentQueryDto,
   ActivityLogQueryDto,
+  CreateThemeDto,
+  UpdateThemeDto,
+  ThemeQueryDto,
 } from './admin.dto';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -301,6 +304,35 @@ export class AdminController {
   @Roles('platform_admin', 'TenantAdmin', 'staff')
   getActivityLogById(@Param('id') id: string) {
     return this.adminService.getActivityLogById(id);
+  }
+
+  // Theme Management Endpoints
+  @Post('themes')
+  async createTheme(@Body() createThemeDto: CreateThemeDto) {
+    return this.adminService.createTheme(createThemeDto);
+  }
+
+  @Get('themes')
+  async getAllThemes(@Query() query: ThemeQueryDto) {
+    return this.adminService.getAllThemes(query);
+  }
+
+  @Get('themes/:id')
+  async getThemeById(@Param('id') id: string) {
+    return this.adminService.getThemeById(id);
+  }
+
+  @Put('themes/:id')
+  async updateTheme(
+    @Param('id') id: string,
+    @Body() updateThemeDto: UpdateThemeDto,
+  ) {
+    return this.adminService.updateTheme(id, updateThemeDto);
+  }
+
+  @Delete('themes/:id')
+  async deleteTheme(@Param('id') id: string) {
+    return this.adminService.deleteTheme(id);
   }
 
   @Delete('activity-logs/:id')
