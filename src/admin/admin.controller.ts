@@ -37,6 +37,8 @@ import {
   CreateThemeDto,
   UpdateThemeDto,
   ThemeQueryDto,
+  UpdateThemeStatusDto,
+  UpdateThemePriceDto,
 } from './admin.dto';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -52,9 +54,14 @@ export class AdminController {
   // Public endpoint for Admin Registration
   @Public()
   @Post('register')
-
   async registerAdmin(@Body() createAdminDto: any) { // Type should be CreateAdminDto but importing to avoid circular dep issues quickly
      return this.adminService.registerAdmin(createAdminDto);
+  }
+
+  @Post('themes/seed')
+  @Roles('platform_admin')
+  async seedThemes() {
+    return this.adminService.seedThemes();
   }
 
   // User endpoints (Platform Users) - Platform Admin only
@@ -313,6 +320,7 @@ export class AdminController {
   }
 
   @Get('themes')
+  @Roles('platform_admin', 'TenantAdmin')
   async getAllThemes(@Query() query: ThemeQueryDto) {
     return this.adminService.getAllThemes(query);
   }
@@ -331,13 +339,50 @@ export class AdminController {
   }
 
   @Delete('themes/:id')
+  @Roles('platform_admin')
   async deleteTheme(@Param('id') id: string) {
     return this.adminService.deleteTheme(id);
+  }
+
+  @Patch('themes/:id/status')
+  @Roles('platform_admin')
+  async updateThemeStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateThemeStatusDto,
+  ) {
+    return this.adminService.updateThemeStatus(id, updateStatusDto.status);
+  }
+
+  @Patch('themes/:id/price')
+  @Roles('platform_admin')
+  async updateThemePrice(
+    @Param('id') id: string,
+    @Body() updatePriceDto: UpdateThemePriceDto,
+  ) {
+    return this.adminService.updateThemePrice(id, updatePriceDto.price, updatePriceDto.isPremium);
   }
 
   @Delete('activity-logs/:id')
   @Roles('platform_admin', 'TenantAdmin')
   deleteActivityLog(@Param('id') id: string) {
     return this.adminService.deleteActivityLog(id);
+  }
+
+  // Tenant Configuration Endpoints (For Tenant Admins)
+  @Get('tenant-config/:tenantId')
+  @Roles('platform_admin', 'TenantAdmin', 'staff') // Staff can view to support
+  async getTenantConfig(@Param('tenantId') tenantId: string) {
+    // In a real app, you'd verify if the requesting user belongs to this tenant
+    // For now, relying on RolesGuard to ensure they are at least an admin/staff
+    return this.adminService.getTenantConfig(tenantId);
+  }
+
+  @Put('tenant-config/:tenantId')
+  @Roles('platform_admin', 'TenantAdmin')
+  async updateTenantConfig(
+    @Param('tenantId') tenantId: string,
+    @Body() updateDto: any, // Using any temporarily to avoid import circularity if strict, but ideally UpdateTenantConfigDto
+  ) {
+    return this.adminService.updateTenantConfig(tenantId, updateDto);
   }
 }

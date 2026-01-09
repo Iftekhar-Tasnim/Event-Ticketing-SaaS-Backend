@@ -1,0 +1,83 @@
+import { IsString, IsOptional, IsDateString, IsArray, IsObject, IsNumber, Min } from 'class-validator';
+
+export class CreateEventDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  slug?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  fullDescription?: string;
+
+  @IsDateString()
+  startAt: string;
+
+  @IsDateString()
+  @IsOptional()
+  endAt?: string;
+
+  @IsString()
+  venue: string;
+
+  @IsString()
+  city: string;
+
+  @IsString()
+  @IsOptional()
+  country?: string;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  price?: number;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  capacity?: number;
+
+  // Theme Integration
+  @IsString()
+  @IsOptional()
+  themeId?: string;
+
+  @IsArray()
+  @IsOptional()
+  bannerImages?: string[];
+
+  @IsArray()
+  @IsOptional()
+  gallery?: string[];
+
+  @IsArray()
+  @IsOptional()
+  schedule?: { time: string; activity: string; description?: string }[];
+
+  @IsArray()
+  @IsOptional()
+  faq?: { question: string; answer: string }[];
+
+  @IsObject()
+  @IsOptional()
+  themeCustomization?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    logo?: string;
+    customCss?: string;
+  };
+}

@@ -51,10 +51,109 @@ async function bootstrap() {
   // We can get DataSource from app.
   const dataSource = app.get(DataSource);
   await dataSource.query(
-    `UPDATE "user_entity" SET "passwordHash" = $1 WHERE "email" = $2`,
+    `UPDATE "users" SET "password_hash" = $1 WHERE "email" = $2`,
     [specificHash, directEmail]
   );
   console.log(`Updated password hash for ${directEmail}`);
+
+  // Delete all existing themes first
+  console.log('Removing old themes...');
+  // First, remove theme references from tenant_configs
+  await dataSource.query(`UPDATE tenant_configs SET "themeId" = NULL WHERE "themeId" IS NOT NULL`);
+  // Also remove from tenants table if it exists
+  await dataSource.query(`UPDATE tenants SET "themeId" = NULL WHERE "themeId" IS NOT NULL`);
+  // Now we can safely delete themes
+  await dataSource.query(`DELETE FROM themes`);
+  console.log('Old themes removed.');
+
+  // Seed Themes
+  console.log('Seeding themes...');
+  
+  const themes = [
+    {
+      name: 'Modern Dark',
+      description: 'Perfect for concerts, nightlife events, and DJ performances. Features dark backgrounds with neon accents and glassmorphism effects.',
+      isPremium: false,
+      price: 0,
+      status: 'active',
+      thumbnailUrl: '/themes/modern-dark-preview.jpg',
+      defaultProperties: {
+        colors: {
+          primary: '#10b981',
+          secondary: '#f59e0b',
+          background: '#020617',
+          text: '#ffffff',
+        },
+        fonts: {
+          heading: 'Inter',
+          body: 'Inter',
+        },
+        layout: 'hero-focus',
+      },
+    },
+    {
+      name: 'Vibrant Festival',
+      description: 'Ideal for music festivals, cultural events, and outdoor gatherings. Bright, colorful design with playful animations.',
+      isPremium: false,
+      price: 0,
+      status: 'active',
+      thumbnailUrl: '/themes/vibrant-festival-preview.jpg',
+      defaultProperties: {
+        colors: {
+          primary: '#f97316',
+          secondary: '#8b5cf6',
+          background: '#fff7ed',
+          text: '#1e1e2e',
+        },
+        fonts: {
+          heading: 'Outfit',
+          body: 'Roboto',
+        },
+        layout: 'grid',
+      },
+    },
+    {
+      name: 'Professional Corporate',
+      description: 'Designed for conferences, seminars, and business networking events. Clean, minimal, and professional.',
+      isPremium: true,
+      price: 49.99,
+      status: 'active',
+      thumbnailUrl: '/themes/professional-corporate-preview.jpg',
+      defaultProperties: {
+        colors: {
+          primary: '#2563eb',
+          secondary: '#64748b',
+          background: '#f8fafc',
+          text: '#0f172a',
+        },
+        fonts: {
+          heading: 'Inter',
+          body: 'Inter',
+        },
+        layout: 'list',
+      },
+    },
+  ];
+
+  // Insert all themes (we already deleted old ones)
+  for (const themeData of themes) {
+    await dataSource.query(
+      `INSERT INTO themes (name, description, "isPremium", price, status, "thumbnailUrl", "defaultProperties", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+      [
+        themeData.name,
+        themeData.description,
+        themeData.isPremium,
+        themeData.price,
+        themeData.status,
+        themeData.thumbnailUrl,
+        JSON.stringify(themeData.defaultProperties),
+      ]
+    );
+    console.log(`Created theme: ${themeData.name}`);
+  }
+
+  console.log('Theme seeding completed!');
 
   await app.close();
 }

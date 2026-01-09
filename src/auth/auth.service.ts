@@ -24,7 +24,7 @@ export class AuthService {
   async signIn(
     email: string,
     password: string,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{ access_token: string; user: any }> {
     // Find user by email
     const user = await this.adminService.findUserByEmail(email);
 
@@ -37,11 +37,6 @@ export class AuthService {
 
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Restriction: Only allow Platform Admins to login via this endpoint
-    if (!user.isPlatformAdmin) {
-      throw new UnauthorizedException('Access denied. Admin privileges required.');
     }
 
     // Determine user role and tenant information
@@ -70,6 +65,11 @@ export class AuthService {
       }
     }
 
+    // Restriction: Ensure user has SOME valid role (Platform or Tenant)
+    if (!role) {
+       throw new UnauthorizedException('Access denied. No active role found.');
+    }
+
     // Create JWT payload
     const payload: JwtPayload = {
       sub: user.id,
@@ -83,6 +83,14 @@ export class AuthService {
     // Generate and return token
     return {
       access_token: await this.jwtService.signAsync(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.fullName,
+        role: role,
+        tenantId: tenantId,
+        isPlatformAdmin: user.isPlatformAdmin
+      }
     };
   }
 }

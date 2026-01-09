@@ -27,6 +27,7 @@ import {
   CreateThemeDto,
   UpdateThemeDto,
   ThemeQueryDto,
+  UpdateTenantConfigDto,
 } from './admin.dto';
 import { UserEntity } from './user.entity';
 import { TenantEntity } from './tenant.entity';
@@ -35,6 +36,7 @@ import { WebhookEventEntity } from './webhook-event.entity';
 import { PaymentEntity } from './payment.entity';
 import { ActivityLogEntity } from './activity-log.entity';
 import { ThemeEntity } from './theme.entity';
+import { TenantConfigEntity } from './tenant-config.entity';
 
 @Injectable()
 export class AdminService {
@@ -53,7 +55,81 @@ export class AdminService {
     private activityLogRepository: Repository<ActivityLogEntity>,
     @InjectRepository(ThemeEntity)
     private themeRepository: Repository<ThemeEntity>,
+    @InjectRepository(TenantConfigEntity)
+    private tenantConfigRepository: Repository<TenantConfigEntity>,
   ) {}
+
+  async seedThemes() {
+    const themes = [
+      {
+        name: 'Midnight Pro',
+        description: 'Premium dark mode theme for concerts and nightlife.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=500',
+        isPremium: false,
+        price: 0,
+        type: 'dark',
+        defaultProperties: {
+          colors: { 
+            primary: '#10b981', // Emerald 500
+            secondary: '#f59e0b', // Amber 500
+            background: '#020617', // Slate 950
+            text: '#ffffff'
+          },
+          fonts: { heading: 'Inter', body: 'Inter' },
+          layout: 'hero-focus'
+        }
+      },
+      {
+        name: 'Sunset Festival',
+        description: 'Warm and vibrant theme for outdoor festivals.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&q=80&w=500',
+        isPremium: false,
+        price: 0,
+        type: 'light',
+        defaultProperties: {
+          colors: { 
+            primary: '#f97316', // Orange 500
+            secondary: '#8b5cf6', // Violet 500
+            background: '#fff7ed', // Orange 50
+            text: '#1e1e2e'
+          },
+          fonts: { heading: 'Outfit', body: 'Roboto' },
+          layout: 'grid'
+        }
+      },
+      {
+        name: 'Corporate Summit',
+        description: 'Clean and professional look for business events.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1505373877841-8d43f703fb8f?auto=format&fit=crop&q=80&w=500',
+        isPremium: true,
+        price: 49.00,
+        type: 'light',
+        defaultProperties: {
+          colors: { 
+            primary: '#2563eb', // Blue 600
+            secondary: '#64748b', // Slate 500
+            background: '#f8fafc', // Slate 50
+            text: '#0f172a'
+          },
+          fonts: { heading: 'Inter', body: 'Inter' },
+          layout: 'list'
+        }
+      }
+    ];
+
+    for (const themeData of themes) {
+      const existing = await this.themeRepository.findOne({ where: { name: themeData.name } });
+      if (!existing) {
+        await this.themeRepository.save(this.themeRepository.create({
+          ...themeData,
+          status: 'active',
+          properties: {} // Legacy support
+        }));
+      }
+    }
+
+    return { message: 'Themes seeded successfully' };
+  }
 
   // User operations (Platform Users)
   async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -245,7 +321,15 @@ export class AdminService {
   async getTenantById(id: string): Promise<TenantEntity> {
     const tenant = await this.tenantRepository.findOneBy({ id });
     if (!tenant) {
-      throw new NotFoundException(`Tenant with id ${id} not found`);
+      throw new NotFoundException(`Tenant with ID ${id} not found`);
+    }
+    return tenant;
+  }
+
+  async getTenantBySlug(slug: string): Promise<TenantEntity> {
+    const tenant = await this.tenantRepository.findOne({ where: { slug } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant with slug ${slug} not found`);
     }
     return tenant;
   }
@@ -766,5 +850,49 @@ export class AdminService {
     if (result.affected === 0) {
       throw new NotFoundException(`Theme with ID ${id} not found`);
     }
+  }
+
+  async updateThemeStatus(id: string, status: string): Promise<ThemeEntity> {
+    const theme = await this.getThemeById(id);
+    theme.status = status;
+    return this.themeRepository.save(theme);
+  }
+
+  async updateThemePrice(id: string, price: number, isPremium: boolean): Promise<ThemeEntity> {
+    const theme = await this.getThemeById(id);
+    theme.price = price;
+    theme.isPremium = isPremium;
+    return this.themeRepository.save(theme);
+  }
+
+  // Tenant Config Operations
+  async getTenantConfig(tenantId: string): Promise<TenantConfigEntity> {
+    const config = await this.tenantConfigRepository.findOne({
+      where: { tenantId },
+      relations: ['theme', 'tenant'], // Include theme and tenant details
+    });
+
+    if (!config) {
+      // Create default config if none exists
+      // But verify tenant exists first to avoid foreign key error
+      const tenant = await this.tenantRepository.findOneBy({ id: tenantId });
+      if (!tenant) throw new NotFoundException('Tenant not found');
+
+      const newConfig = this.tenantConfigRepository.create({ tenantId });
+      return this.tenantConfigRepository.save(newConfig);
+    }
+
+    return config;
+  }
+
+  async updateTenantConfig(tenantId: string, updateDto: UpdateTenantConfigDto): Promise<TenantConfigEntity> {
+    let config = await this.tenantConfigRepository.findOne({ where: { tenantId } });
+    
+    if (!config) {
+        config = this.tenantConfigRepository.create({ tenantId });
+    }
+
+    Object.assign(config, updateDto);
+    return this.tenantConfigRepository.save(config);
   }
 }

@@ -11,14 +11,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async signIn(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
-    const { access_token } = await this.authService.signIn(loginDto.email, loginDto.password);
+    const { access_token, user } = await this.authService.signIn(loginDto.email, loginDto.password);
     response.cookie('jwt', access_token, {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
       sameSite: 'lax',
       path: '/',
     });
-    return { message: 'Login successful' };
+    return { 
+      message: 'Login successful',
+      user: user // Return user details for frontend redirection
+    };
   }
 
   @Post('logout')

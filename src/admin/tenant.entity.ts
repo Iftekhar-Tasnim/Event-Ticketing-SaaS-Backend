@@ -4,7 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { ThemeEntity } from './theme.entity';
 
 @Entity('tenants')
 export class TenantEntity {
@@ -26,6 +29,13 @@ export class TenantEntity {
     default: 'pending',
   })
   status: string;
+
+  @Column({ nullable: true })
+  themeId: string;
+
+  @ManyToOne(() => ThemeEntity, { nullable: true })
+  @JoinColumn({ name: 'themeId' })
+  theme: ThemeEntity;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

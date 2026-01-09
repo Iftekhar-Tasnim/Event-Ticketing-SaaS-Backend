@@ -7,6 +7,9 @@ import { AuthModule } from './auth/auth.module';
 import { TenantAdminModule } from './tenant-admin/tenant-admin.module';
 import { StaffModule } from './staff/staff.module';
 import { AttendeeModule } from './attendee/attendee.module';
+import { PublicController } from './app/public.controller';
+import { EventsModule } from './events/events.module';
+import { TicketsModule } from './tickets/tickets.module';
 
 @Module({
   imports: [
@@ -44,8 +47,10 @@ import { AttendeeModule } from './attendee/attendee.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    EventsModule,
+    TicketsModule,
   ],
-  controllers: [],
+  controllers: [PublicController],
   providers: [],
 })
 export class AppModule {}

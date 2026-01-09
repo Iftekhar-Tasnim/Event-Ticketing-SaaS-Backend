@@ -439,6 +439,30 @@ export class ActivityLogQueryDto {
   action?: string;
 }
 
+export class UpdateTenantConfigDto {
+  @IsOptional()
+  @IsString()
+  themeId?: string;
+
+  @IsOptional()
+  styleOverrides?: Record<string, any>;
+
+  @IsOptional()
+  assets?: {
+    logoUrl?: string;
+    heroBannerUrl?: string;
+    faviconUrl?: string;
+  };
+
+  @IsOptional()
+  siteInfo?: {
+    title?: string;
+    description?: string;
+    contactEmail?: string;
+    socialLinks?: Record<string, string>;
+  };
+}
+
 export class CreateThemeDto {
   @IsString()
   @IsNotEmpty()
@@ -460,8 +484,12 @@ export class CreateThemeDto {
   @IsNumber()
   price?: number;
 
+  @IsOptional()
+  @IsString()
+  thumbnailUrl?: string;
+
   @IsNotEmpty()
-  properties: Record<string, any>;
+  defaultProperties: Record<string, any>;
 }
 
 export class UpdateThemeDto {
@@ -472,6 +500,10 @@ export class UpdateThemeDto {
   @IsOptional()
   @IsString()
   description?: string;
+  
+  @IsOptional()
+  @IsString()
+  thumbnailUrl?: string;
 
   @IsOptional()
   @IsString()
@@ -486,7 +518,7 @@ export class UpdateThemeDto {
   price?: number;
 
   @IsOptional()
-  properties?: Record<string, any>;
+  defaultProperties?: Record<string, any>;
 }
 
 export class ThemeQueryDto {
@@ -497,4 +529,20 @@ export class ThemeQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+}
+
+export class UpdateThemeStatusDto {
+  @IsIn(['active', 'inactive', 'draft'], {
+    message: 'status must be one of: active, inactive, draft',
+  })
+  status: string;
+}
+
+export class UpdateThemePriceDto {
+  @IsNumber()
+  @Min(0)
+  price: number;
+
+  @IsBoolean()
+  isPremium: boolean;
 }
