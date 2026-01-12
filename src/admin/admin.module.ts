@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminController } from './admin.controller';
+import { ThemePurchaseController } from './theme-purchase.controller';
 import { AdminService } from './admin.service';
+import { ThemePurchaseService } from './theme-purchase.service';
 import { UserEntity } from './user.entity';
 import { TenantEntity } from './tenant.entity';
 import { TenantUserEntity } from './tenant-user.entity';
@@ -10,6 +12,7 @@ import { PaymentEntity } from './payment.entity';
 import { ActivityLogEntity } from './activity-log.entity';
 import { ThemeEntity } from './theme.entity';
 import { TenantConfigEntity } from './tenant-config.entity';
+import { ThemePurchaseEntity } from './theme-purchase.entity';
 
 @Module({
   imports: [
@@ -22,10 +25,11 @@ import { TenantConfigEntity } from './tenant-config.entity';
       ActivityLogEntity,
       ThemeEntity,
       TenantConfigEntity,
+      ThemePurchaseEntity,
     ]),
   ],
-  controllers: [AdminController],
-  providers: [AdminService],
-  exports: [AdminService], // Export to allow AuthModule to use it
+  controllers: [AdminController, ThemePurchaseController],
+  providers: [AdminService, ThemePurchaseService],
+  exports: [AdminService, ThemePurchaseService], // Export both services
 })
 export class AdminModule {}

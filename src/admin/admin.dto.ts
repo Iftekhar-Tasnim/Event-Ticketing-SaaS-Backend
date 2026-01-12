@@ -528,6 +528,15 @@ export class ThemeQueryDto {
 
   @IsOptional()
   @IsString()
+  category?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isPremium?: boolean;
+
+  @IsOptional()
+  @IsString()
   search?: string;
 }
 

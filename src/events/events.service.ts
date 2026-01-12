@@ -71,11 +71,11 @@ export class EventsService {
       .leftJoinAndSelect('event.theme', 'theme')
       .where('tenant.slug = :tenantSlug', { tenantSlug })
       .andWhere('event.slug = :eventSlug', { eventSlug })
-      .andWhere('event.status = :status', { status: 'published' })
+      .andWhere('event.isPublished = :isPublished', { isPublished: true })
       .getOne();
 
     if (!event) {
-      throw new NotFoundException(`Event not found`);
+      throw new NotFoundException(`Event not found or not published`);
     }
     return event;
   }
@@ -112,6 +112,21 @@ export class EventsService {
     }
 
     await this.eventRepository.update(id, updateData);
+    return this.getEventById(id);
+  }
+
+  async updateThemeContent(id: string, themeContent: any) {
+    await this.eventRepository.update(id, { themeContent });
+    return this.getEventById(id);
+  }
+
+  async updateSeoSettings(id: string, seoSettings: any) {
+    await this.eventRepository.update(id, { seoSettings });
+    return this.getEventById(id);
+  }
+
+  async publishEvent(id: string, isPublished: boolean) {
+    await this.eventRepository.update(id, { isPublished });
     return this.getEventById(id);
   }
 

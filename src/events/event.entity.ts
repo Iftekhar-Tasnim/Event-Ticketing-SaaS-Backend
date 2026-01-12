@@ -50,11 +50,14 @@ export class EventEntity {
   @Column({ nullable: true })
   imageUrl: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, comment: 'Price in BDT (Taka)' })
   price: number;
 
   @Column({ default: 'draft' }) // draft, published, cancelled
   status: string;
+
+  @Column({ default: false })
+  isPublished: boolean; // Controls public visibility on landing page
 
   @Column({ type: 'int', default: 100 })
   capacity: number;
@@ -92,6 +95,66 @@ export class EventEntity {
     secondaryColor?: string;
     logo?: string;
     customCss?: string;
+  };
+
+  // Enhanced Theme Content for Complete Landing Page
+  @Column({ type: 'jsonb', nullable: true, default: '{}' })
+  themeContent: {
+    hero?: {
+      title: string;
+      subtitle: string;
+      backgroundImage: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+    about?: {
+      heading: string;
+      content: string;
+      images: string[];
+    };
+    features?: Array<{
+      icon: string;
+      title: string;
+      description: string;
+    }>;
+    schedule?: Array<{
+      time: string;
+      title: string;
+      description: string;
+      speaker?: string;
+    }>;
+    tickets?: Array<{
+      name: string;
+      price: number; // BDT
+      description: string;
+      available: number;
+      features: string[];
+    }>;
+    speakers?: Array<{
+      name: string;
+      role: string;
+      bio: string;
+      photo: string;
+      social?: { twitter?: string; linkedin?: string };
+    }>;
+    venue?: {
+      name: string;
+      address: string;
+      mapUrl: string;
+      directions: string;
+      parking: string;
+    };
+    gallery?: string[];
+    faq?: Array<{ question: string; answer: string }>;
+  };
+
+  // SEO Settings
+  @Column({ type: 'jsonb', nullable: true, default: '{}' })
+  seoSettings: {
+    metaTitle?: string;
+    metaDescription?: string;
+    ogImage?: string;
+    keywords?: string[];
   };
 
   @CreateDateColumn()

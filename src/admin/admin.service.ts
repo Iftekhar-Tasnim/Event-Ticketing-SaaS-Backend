@@ -821,8 +821,16 @@ export class AdminService {
       qb.andWhere('theme.status = :status', { status: query.status });
     }
 
+    if (query.category) {
+      qb.andWhere('theme.category = :category', { category: query.category });
+    }
+
+    if (query.isPremium !== undefined) {
+      qb.andWhere('theme.isPremium = :isPremium', { isPremium: query.isPremium });
+    }
+
     if (query.search) {
-      qb.andWhere('theme.name ILIKE :search', { search: `%${query.search}%` });
+      qb.andWhere('(theme.name ILIKE :search OR theme.description ILIKE :search)', { search: `%${query.search}%` });
     }
 
     qb.orderBy('theme.createdAt', 'DESC');

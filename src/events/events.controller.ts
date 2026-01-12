@@ -82,4 +82,45 @@ export class EventsController {
   ) {
     return this.eventsService.deleteImage(id, decodeURIComponent(imageUrl));
   }
+
+  // Theme Customization Endpoints
+  @Put(':id/theme-content')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TenantAdmin')
+  async updateThemeContent(
+    @Param('id') id: string,
+    @Body() themeContent: any,
+  ) {
+    return this.eventsService.updateThemeContent(id, themeContent);
+  }
+
+  @Put(':id/seo')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TenantAdmin')
+  async updateSeoSettings(
+    @Param('id') id: string,
+    @Body() seoSettings: any,
+  ) {
+    return this.eventsService.updateSeoSettings(id, seoSettings);
+  }
+
+  @Put(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TenantAdmin')
+  async publishEvent(
+    @Param('id') id: string,
+    @Body('isPublished') isPublished: boolean,
+  ) {
+    return this.eventsService.publishEvent(id, isPublished);
+  }
+
+  // Public Event Endpoint
+  @Public()
+  @Get('public/:tenantSlug/:eventSlug')
+  async getPublicEventBySlug(
+    @Param('tenantSlug') tenantSlug: string,
+    @Param('eventSlug') eventSlug: string,
+  ) {
+    return this.eventsService.getEventBySlug(tenantSlug, eventSlug);
+  }
 }
