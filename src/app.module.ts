@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
@@ -18,20 +18,24 @@ import { SharedModule } from './shared/shared.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    MailerModule.forRoot({
-      transport: {
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '465'),
-        ignoreTLS: true,
-        secure: true, // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (config: ConfigService) => ({
+        transport: {
+          host: config.get('SMTP_HOST', 'smtp.gmail.com'),
+          port: parseInt(config.get('SMTP_PORT', '465')),
+          ignoreTLS: true,
+          secure: true,
+          auth: {
+            user: config.get('SMTP_USER'),
+            pass: config.get('SMTP_PASS'),
+          },
         },
-      },
-      defaults: {
-        from: `"Event Ticketing System" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
-      },
+        defaults: {
+          from: `"Event Ticketing System" <${config.get('SMTP_USER', 'noreply@example.com')}>`,
+        },
+      }),
+      inject: [ConfigService],
     }),
     TenantAdminModule,
     AdminModule,
@@ -52,7 +56,7 @@ import { SharedModule } from './shared/shared.module';
             host: 'localhost',
             port: 5432,
             username: 'postgres',
-            password: '1212',
+            password: '665566',
             database: 'Saas',
             autoLoadEntities: true,
             synchronize: true,
